@@ -1,0 +1,961 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model LoginEvent {
+  id String @id @default(uuid())
+
+  userId   String  @map("user_id")
+  roleType String? @map("role_type")
+
+  message String?
+  level   String?
+
+  domainName String? @map("domain_name")
+  ipAddress  String? @map("ip_address")
+
+  latitude  Float?
+  longitude Float?
+  location  String?
+  accuracy  Int?
+
+  userAgent String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_events")
+}
+
+model AuditLog {
+  id         String  @id @default(uuid())
+  userId     String? @map("user_id")
+  action     String
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id")
+  ipAddress  String? @map("ip_address")
+  metadata   Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  users     User[]
+
+  @@map("roles")
+}
+
+model Package {
+  id                 String              @id @default(uuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
+  packagePermissions PackagePermission[]
+  users              User[]
+  commissionSettings CommissionSetting[]
+
+  @@map("packages")
+}
+
+model User {
+  id                            String              @id @default(uuid())
+  username                      String              @db.Text
+  fullName                      String              @map("full_name")
+  profileImage                  String              @map("profile_image") @db.Text
+  email                         String              @unique
+  phoneNumber                   String              @unique @map("phone_number")
+  password                      String
+  transactionPin                String?             @map("transaction_pin") @db.Text
+  parentId                      String?             @map("parent_id")
+  status                        UserStatus          @default(ACTIVE)
+  isKycVerified                 Boolean             @default(false) @map("is_kyc_verified")
+  emailSent                     Boolean             @default(false) @map("email_sent")
+  roleId                        String              @map("role_id")
+  packageId                     String?             @map("package_id")
+  refreshToken                  String?             @map("refresh_token") @db.Text
+  passwordResetToken            String?             @map("password_reset_token")
+  passwordResetExpires          DateTime?           @map("password_reset_expires")
+  emailVerificationToken        String?             @map("email_verification_token")
+  emailVerifiedAt               DateTime?           @map("email_verified_at")
+  emailVerificationTokenExpires DateTime?           @map("email_verification_token_expires")
+  createdAt                     DateTime            @default(now()) @map("created_at")
+  updatedAt                     DateTime            @default(now()) @updatedAt @map("updated_at")
+  deletedAt                     DateTime?           @map("deleted_at")
+  deactivationReason            String?             @map("user_deactivation_reason") @db.LongText
+  bankAccounts                  BankDetail[]
+  commissionEarningsCreated     CommissionEarning[] @relation("CommissionEarningCreatedBy")
+  commissionsGiven              CommissionEarning[] @relation("CommissionEarningFromUser")
+  commissionEarnings            CommissionEarning[] @relation("CommissionEarningToUser")
+  commissionSetting             CommissionSetting[]
+  piiConsents                   PiiConsent[]
+  systemSettings                SystemSetting[]
+  transactions                  Transaction[]
+  kycs                          UserKyc[]
+  userPermissions               UserPermission[]
+  parent                        User?               @relation("UserHierarchy", fields: [parentId], references: [id])
+  children                      User[]              @relation("UserHierarchy")
+  role                          Role                @relation(fields: [roleId], references: [id])
+  package                       Package?            @relation(fields: [packageId], references: [id])
+  wallets                       Wallet[]
+  limits                        UserLimit?
+  loginEvents                   LoginEvent[]
+  ledgerEntries                 LedgerEntry[]
+  apiKeys                       ApiKey[]
+  apiAccessTokens               ApiAccessToken[]
+  apiRequestLogs                ApiRequestLog[]
+  rateLimits                    RateLimit[]
+  businessDetail                BusinessDetail?
+
+  @@index([parentId])
+  @@index([phoneNumber])
+  @@index([roleId], map: "users_role_id_fkey")
+  @@map("users")
+}
+
+model BusinessDetail {
+  id String @id @default(uuid())
+
+  userId String @unique @map("user_id")
+
+  businessName       String  @map("business_name")
+  businessType       String? @map("business_type")
+  registrationNumber String? @map("registration_number")
+
+  gstNumber String? @map("gst_number")
+  panNumber String? @map("pan_number")
+
+  addressLine1 String? @map("address_line_1")
+  addressLine2 String? @map("address_line_2")
+
+  city       String?
+  state      String?
+  country    String?
+  postalCode String? @map("postal_code")
+
+  website String?
+  logo    String? @db.Text
+
+  isVerified Boolean @default(false) @map("is_verified")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("business_details")
+}
+
+// API KEY
+model ApiKey {
+  id String @id @default(uuid())
+
+  userId String @map("user_id")
+
+  name String
+
+  apiKey String @unique @map("api_key")
+
+  secretKey String @map("secret_key")
+
+  provider String
+
+  allowedIps Json? @map("allowed_ips")
+
+  callbackUrl String? @map("callback_url")
+
+  webhookSecret String? @map("webhook_secret")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  expiresAt DateTime? @map("expires_at")
+
+  lastUsedAt DateTime? @map("last_used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  accessTokens ApiAccessToken[]
+
+  requestLogs ApiRequestLog[]
+  rateLimits  RateLimit[]
+
+  @@index([userId])
+  @@index([apiKey])
+  @@map("api_keys")
+}
+
+// API ACCESS TOKEN
+model ApiAccessToken {
+  id String @id @default(uuid())
+
+  userId String @map("user_id")
+
+  apiKeyId String? @map("api_key_id")
+
+  accessToken String @unique @map("access_token")
+
+  refreshToken String? @unique @map("refresh_token")
+
+  ipAddress String? @map("ip_address")
+
+  userAgent String? @map("user_agent")
+
+  deviceId String? @map("device_id")
+
+  isRevoked Boolean @default(false) @map("is_revoked")
+
+  expiresAt DateTime @map("expires_at")
+
+  refreshExpiresAt DateTime? @map("refresh_expires_at")
+
+  lastUsedAt DateTime? @map("last_used_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  @@index([userId])
+  @@index([apiKeyId])
+  @@index([accessToken])
+  @@map("api_access_tokens")
+}
+
+// API REQUEST LOGS
+
+model ApiRequestLog {
+  id String @id @default(uuid())
+
+  userId String? @map("user_id")
+
+  apiKeyId String? @map("api_key_id")
+
+  transactionId String? @map("transaction_id")
+
+  endpoint String
+
+  method String
+
+  ipAddress String? @map("ip_address")
+
+  requestHeaders Json? @map("request_headers")
+
+  requestBody Json? @map("request_body")
+
+  responseBody Json? @map("response_body")
+
+  statusCode Int? @map("status_code")
+
+  responseTime Int? @map("response_time")
+
+  errorMessage String? @map("error_message")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([userId])
+  @@index([apiKeyId])
+  @@index([transactionId])
+  @@index([endpoint])
+  @@index([createdAt])
+  @@map("api_request_logs")
+}
+
+// RATE LIMIT
+
+model RateLimit {
+  id String @id @default(uuid())
+
+  userId String? @map("user_id")
+
+  apiKeyId String? @map("api_key_id")
+
+  endpoint String
+
+  requests Int @default(0)
+
+  limitCount Int @default(100)
+
+  windowSeconds Int @default(60)
+
+  resetAt DateTime @map("reset_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  @@index([userId])
+  @@index([apiKeyId])
+  @@index([endpoint])
+  @@map("rate_limits")
+}
+
+model UserKyc {
+  id                 String       @id @default(uuid())
+  userId             String       @map("user_id")
+  fullName           String       @map("full_name")
+  fatherName         String       @map("father_name")
+  dob                DateTime
+  gender             Gender
+  status             KycStatus    @default(PENDING)
+  type               KycTypes     @default(USER_KYC)
+  kycType            String       @default("MANUAL")
+  kycRejectionReason String?      @map("kyc_rejection_reason") @db.LongText
+  addressId          String       @map("address_id")
+  panFile            String       @map("pan_file")
+  aadhaarFile        String       @map("aadhaar_file")
+  addressProofFile   String       @map("address_proof_file")
+  photo              String
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
+  deletedAt          DateTime?    @map("deleted_at")
+  piiConsents        PiiConsent[]
+  address            Address      @relation(fields: [addressId], references: [id])
+  user               User         @relation(fields: [userId], references: [id])
+
+  @@index([addressId], map: "user_kyc_address_id_fkey")
+  @@index([userId], map: "user_kyc_user_id_fkey")
+  @@map("user_kyc")
+}
+
+model BankDetail {
+  id                  String      @id @default(uuid())
+  accountHolder       String      @map("account_holder") @db.Text
+  accountNumber       String      @unique @map("account_number") @db.VarChar(18)
+  phoneNumber         String      @map("phone_number")
+  accountType         AccountType @map("account_type")
+  ifscCode            String      @map("ifsc_code") @db.Text
+  bankName            String      @map("bank_name") @db.Text
+  bankRejectionReason String?     @map("bank_rejection_reason") @db.LongText
+  bankProofFile       String      @map("bank_proof_file")
+  status              KycStatus   @default(PENDING)
+  isPrimary           Boolean     @default(false) @map("is_primary")
+  userId              String      @map("user_id")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @default(now()) @updatedAt @map("updated_at")
+  deletedAt           DateTime?   @map("deleted_at")
+  user                User        @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "bank_details_user_id_fkey")
+  @@map("bank_details")
+}
+
+model Beneficiary {
+  id            String  @id @default(cuid())
+  userId        String  @map("user_id")
+  accountNumber String  @map("account_number")
+  ifsc          String
+  name          String
+  mobile        String  @db.VarChar(15)
+  isVerified    Boolean @default(false) @map("is_verified")
+  metaData      Json?   @map("meta_data")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, accountNumber, ifsc])
+  @@index([userId])
+  @@map("beneficiarys")
+}
+
+model BbpsCategory {
+  id       String @id @default(uuid())
+  biller   String
+  category String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([biller])
+  @@map("bbps_categories")
+}
+
+model BbpsBiller {
+  id             String @id @default(uuid())
+  billerId       String @unique @map("biller_id")
+  billerName     String @map("biller_name")
+  category       String
+  customerParams Json   @map("customer_params")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("bbps_billers")
+}
+
+model BbpsFetchBill {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  serviceProviderMappingId String @map("service_provider_mapping_id")
+
+  billerId          String  @map("biller_id")
+  reference         String
+  fetchId           String  @unique @map("fetch_id")
+  customerParams    Json?   @map("customer_params")
+  customerParamsKey String? @map("customer_params_key")
+
+  amount BigInt
+  status String
+
+  customerName String?   @map("customer_name")
+  dueDate      DateTime? @map("due_date")
+
+  rawResponse Json? @map("raw_response")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, billerId, customerParamsKey])
+  @@map("bbps_fetch_bill")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  address   String   @db.LongText
+  pinCode   String   @map("pin_code")
+  state     String   @map("state")
+  city      String   @map("city")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  UserKyc UserKyc[]
+
+  @@map("addresses")
+}
+
+model Wallet {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  walletType WalletType @map("wallet_type")
+
+  balance     BigInt
+  holdBalance BigInt @map("hold_balance")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("update_at")
+
+  user          User          @relation(fields: [userId], references: [id])
+  ledgerEntries LedgerEntry[]
+  transactions  Transaction[]
+
+  @@unique([userId, walletType])
+  @@index([userId])
+  @@map("wallets")
+}
+
+model UserLimit {
+  userId String @id @map("user_id")
+
+  dailyLimit   BigInt?
+  monthlyLimit BigInt?
+  perTxnLimit  BigInt?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_limits")
+}
+
+model CommissionSetting {
+  id    String          @id @default(uuid())
+  scope CommissionScope @default(ROLE)
+
+  roleId                   String? @map("role_id")
+  targetUserId             String? @map("target_user_id")
+  serviceProviderMappingId String
+
+  mode  PricingMode    @default(NONE)
+  type  CommissionType @default(NONE)
+  value BigInt
+
+  applyTDS   Boolean @default(false) @map("apply_tds")
+  tdsPercent BigInt? @map("tds_percent")
+
+  applyGST   Boolean @default(false) @map("apply_gst")
+  gstPercent BigInt? @map("gst_percent")
+
+  createdBy String  @map("created_by")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("update_at")
+
+  targetUser           User?   @relation(fields: [targetUserId], references: [id])
+  supportsSlab         Boolean @default(false) @map("support_slab")
+  supportPaymentMethod Boolean @default(false) @map("support_payment_method")
+
+  serviceProviderMapping   ServiceProviderMapping    @relation(fields: [serviceProviderMappingId], references: [id])
+  commissionSlabs          CommissionSlab[]
+  commissionPaymentMethods CommissionPaymentMethod[]
+  package                  Package?                  @relation(fields: [packageId], references: [id])
+  packageId                String?
+
+  @@unique([serviceProviderMappingId, roleId])
+  @@unique([serviceProviderMappingId, targetUserId])
+  @@map("commission_settings")
+}
+
+model CommissionSlab {
+  id                  String @id @default(uuid())
+  commissionSettingId String @map("commission_setting_id")
+
+  minAmount BigInt @map("min_amount")
+  maxAmount BigInt @map("max_amount")
+
+  value             BigInt
+  CommissionSetting CommissionSetting @relation(fields: [commissionSettingId], references: [id])
+  createdAt         DateTime          @default(now())
+
+  @@unique([commissionSettingId, minAmount, maxAmount])
+  @@index([minAmount, maxAmount])
+  @@map("commission_slabs")
+}
+
+model CommissionPaymentMethod {
+  id String @id @default(uuid())
+
+  commissionSettingId String         @map("commission_setting_id")
+  mode                PricingMode    @default(NONE)
+  type                CommissionType @default(NONE)
+  value               BigInt
+
+  paymentMethod String? @map("payment_method")
+  network       String? // optional visa, rupay
+  category      String? // DTH, MOBILE, ELECTRICIT
+  serviceType   String? // BBPS / PAYMENT / PAYOUT / KYC
+  operator      String? // JVVNL / AIRTEL
+
+  applyTDS   Boolean @default(false) @map("apply_tds")
+  tdsPercent BigInt? @map("tds_percent")
+
+  applyGST   Boolean @default(false) @map("apply_gst")
+  gstPercent BigInt? @map("gst_percent")
+
+  createdAt         DateTime          @default(now()) @map("created_at")
+  commissionSetting CommissionSetting @relation(fields: [commissionSettingId], references: [id])
+
+  @@unique([commissionSettingId, paymentMethod, network])
+  @@index([paymentMethod, network])
+  @@map("commission_payment_methods")
+}
+
+model CommissionEarning {
+  id            String  @id @default(uuid())
+  transactionId String  @map("transaction_id")
+  userId        String  @map("user_id")
+  fromUserId    String? @map("from_user_id")
+
+  serviceProviderMappingId String @map("service_provider_mapping_id")
+
+  amount BigInt
+
+  mode PricingMode
+  type CommissionType
+
+  netAmount BigInt @map("net_amount")
+
+  metadata Json? @map("meta_data")
+
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  serviceProviderMapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+
+  user User @relation("CommissionEarningToUser", fields: [userId], references: [id])
+
+  fromUser User? @relation("CommissionEarningFromUser", fields: [fromUserId], references: [id])
+
+  createdByUser User @relation("CommissionEarningCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([transactionId, userId])
+  @@index([userId, createdAt])
+  @@index([serviceProviderMappingId])
+  @@map("commission_earnings")
+}
+
+model Service {
+  id       String  @id @default(uuid())
+  name     String
+  code     String  @unique
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  mappings          ServiceProviderMapping[]
+  UserPermission    UserPermission[]
+  PackagePermission PackagePermission[]
+
+  @@map("services")
+}
+
+model Provider {
+  id       String  @id @default(uuid())
+  name     String
+  code     String  @unique
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  mappings ServiceProviderMapping[]
+
+  @@map("providers")
+}
+
+model ServiceProviderMapping {
+  id String @id @default(uuid())
+
+  serviceId  String @map("service_id")
+  providerId String @map("provider_id")
+
+  // COMMISSION | SURCHARGE
+  mode             PricingMode      @default(NONE)
+  pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
+
+  providerCost         BigInt?              @map("provider_cost")
+  sellingPrice         BigInt?              @map("selling_price")
+  commissionStartLevel CommissionStartLevel @default(NONE)
+
+  applyTDS   Boolean @default(false) @map("apply_tds")
+  tdsPercent BigInt? @map("tds_percent")
+
+  applyGST   Boolean @default(false) @map("apply_gst")
+  gstPercent BigInt? @map("gst_percent")
+
+  config Json?
+
+  priority             Int     @default(1)
+  isActive             Boolean @default(true) @map("is_active")
+  supportsSlab         Boolean @default(false) @map("support_slab")
+  supportPaymentMethod Boolean @default(false) @map("support_payment_method")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  service      Service       @relation(fields: [serviceId], references: [id])
+  provider     Provider      @relation(fields: [providerId], references: [id])
+  transactions Transaction[]
+
+  ledgerEntries        LedgerEntry[]
+  commissionSettings   CommissionSetting[]
+  commissionEarnings   CommissionEarning[]
+  providerSlabs        ProviderSlab[]
+  paymentMethodCharges PaymentMethodChargeProvider[]
+
+  @@unique([serviceId, providerId])
+  @@map("service_provider_mappings")
+}
+
+model ProviderSlab {
+  id String @id @default(uuid())
+
+  serviceProviderMappingId String @map("service_provider_mapping_id")
+
+  minAmount BigInt @map("min_amount")
+  maxAmount BigInt @map("max_amount")
+
+  providerCost BigInt   @map("provider_cost")
+  sellingPrice BigInt?  @map("selling_price")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
+
+  @@index([serviceProviderMappingId, minAmount, maxAmount])
+  @@map("provider_slabs")
+}
+
+model PaymentMethodChargeProvider {
+  id String @id @default(uuid())
+
+  serviceProviderMappingId String @map("service_provider_mapping_id")
+
+  paymentMethod String? @map("payment_method") // card / upi  
+  network       String? // visa / rupay
+
+  category    String? // DTH, MOBILE, ELECTRICITY
+  serviceType String? // BBPS / PAYMENT / PAYOUT / KYC
+  operator    String? // JVVNL code  / AIRTEL code
+
+  applyTDS   Boolean @default(false) @map("apply_tds")
+  tdsPercent BigInt? @map("tds_percent")
+
+  applyGST   Boolean @default(false) @map("apply_gst")
+  gstPercent BigInt? @map("gst_percent")
+
+  mode             PricingMode      @default(NONE)
+  pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
+
+  value   BigInt
+  mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([serviceProviderMappingId, paymentMethod, network])
+  @@map("payment_method_charge_provider")
+}
+
+model UserPermission {
+  id               String   @id @default(uuid())
+  serviceId        String   @map("service_id")
+  userId           String   @map("user_id")
+  canView          Boolean  @default(false) @map("can_view")
+  canEdit          Boolean  @default(false) @map("can_edit")
+  canSetCommission Boolean  @default(false) @map("can_set_commission")
+  canProcess       Boolean  @default(false) @map("can_process")
+  limits           Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+  user             User     @relation(fields: [userId], references: [id])
+  service          Service? @relation(fields: [serviceId], references: [id])
+
+  @@unique([userId, serviceId])
+  @@index([serviceId], map: "user_permissions_service_id_fkey")
+  @@map("user_permissions")
+}
+
+model PackagePermission {
+  id         String   @id @default(uuid())
+  packageId  String   @map("package_id")
+  serviceId  String   @map("service_id")
+  canView    Boolean  @default(false) @map("can_view")
+  canProcess Boolean  @default(false) @map("can_process")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+  package    Package  @relation(fields: [packageId], references: [id])
+  service    Service? @relation(fields: [serviceId], references: [id])
+
+  @@unique([packageId, serviceId])
+  @@index([serviceId], map: "package_permissions_service_id_fkey")
+  @@map("package_permissions")
+}
+
+model SystemSetting {
+  id            String    @id @default(uuid())
+  userId        String?   @map("user_id")
+  companyName   String    @map("company_name")
+  companyLogo   String    @map("company_logo")
+  favIcon       String    @map("fav_icon")
+  phoneNumber   String    @map("phone_number")
+  whtsappNumber String    @map("whtsapp_number")
+  companyEmail  String    @map("company_email")
+  facebookUrl   String    @map("facebook_url")
+  instagramUrl  String    @map("instagram_url")
+  twitterUrl    String    @map("twitter_url")
+  linkedinUrl   String    @map("linkedin_url")
+  websiteUrl    String    @map("website_url")
+  settings      Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  user          User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "settings_user_id_fkey")
+  @@map("settings")
+}
+
+model Transaction {
+  id             String @id @default(uuid())
+  idempotencyKey String @unique @map("idempotency_key")
+  txnId          String @unique @map("txn_id")
+
+  amount    BigInt
+  netAmount BigInt @map("net_amount")
+
+  status                   String  @default("PENDING")
+  serviceProviderMappingId String? @map("service_provider_mapping_id")
+  pricing                  Json?
+
+  userId      String @map("user_id")
+  walletId    String @map("wallet_id")
+  apiEntityId String @unique @map("api_entity_id")
+
+  providerReference String? @map("provider_reference")
+  providerResponse  Json?   @map("provider_response")
+  retryCount        Int     @default(0) @map("retry_count")
+
+  initiatedAt   DateTime  @default(now()) @map("initiated_at")
+  processedAt   DateTime? @map("processed_at")
+  completedAt   DateTime? @map("completed_at")
+  lastCheckedAt DateTime? @map("last_checked_at")
+
+  commissionEarnings CommissionEarning[]
+  ledgerEntries      LedgerEntry[]
+
+  user   User   @relation(fields: [userId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  serviceProviderMapping ServiceProviderMapping? @relation(fields: [serviceProviderMappingId], references: [id])
+  apiRequestLogs         ApiRequestLog[]
+
+  @@index([userId, status])
+  @@index([status, initiatedAt])
+  @@map("transactions")
+}
+
+model LedgerEntry {
+  id            String          @id @default(uuid())
+  transactionId String?         @map("transaction_id")
+  walletId      String          @map("wallet_id")
+  entryType     LedgerEntryType @map("entry_type")
+  referenceType String          @map("reference_type")
+
+  amount         BigInt
+  runningBalance BigInt       @map("running_balance")
+  narration      String       @db.Text
+  metadata       Json?
+  idempotencyKey String?      @map("idempotency_key")
+  createdBy      String       @map("created_by")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  transaction    Transaction? @relation(fields: [transactionId], references: [id])
+  wallet         Wallet       @relation(fields: [walletId], references: [id])
+
+  serviceProviderMappingId String?
+  serviceProviderMapping   ServiceProviderMapping? @relation(fields: [serviceProviderMappingId], references: [id])
+  createdByUser            User                    @relation(fields: [createdBy], references: [id])
+
+  @@unique([idempotencyKey])
+  @@index([transactionId])
+  @@index([walletId, createdAt])
+  @@index([idempotencyKey])
+  @@map("ledger_entries")
+}
+
+model PiiConsent {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  userKycId  String?  @map("user_kyc_id")
+  piiType    String   @map("pii_type")
+  piiHash    String   @map("pii_hash")
+  providedAt DateTime @default(now()) @map("provided_at")
+  expiresAt  DateTime @map("expires_at")
+  scope      String
+  createdAt  DateTime @default(now()) @map("create_at")
+  user       User     @relation(fields: [userId], references: [id])
+  userKyc    UserKyc? @relation(fields: [userKycId], references: [id])
+
+  @@unique([userId, piiType, scope])
+  @@index([userKycId], map: "pii_consents_user_kyc_id_fkey")
+  @@map("pii_consents")
+}
+
+enum CommissionStartLevel {
+  ADMIN_ONLY
+  NONE
+}
+
+enum RoleType {
+  ADMIN
+  API_HOLDER
+}
+
+enum PricingValueType {
+  NONE
+  FLAT
+  PERCENTAGE
+}
+
+enum UserStatus {
+  ACTIVE
+  IN_ACTIVE
+  DELETE
+}
+
+enum PricingMode {
+  NONE
+  COMMISSION
+  SURCHARGE
+}
+
+enum AccountType {
+  PERSONAL
+  BUSINESS
+}
+
+enum CommissionType {
+  NONE
+  FLAT
+  PERCENTAGE
+}
+
+enum CommissionScope {
+  ROLE
+  USER
+}
+
+enum LedgerEntryType {
+  DEBIT
+  CREDIT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECT
+}
+
+enum KycTypes {
+  AEPS
+  USER_KYC
+}
+
+enum Currency {
+  INR
+  USD
+  EUR
+  GBP
+  AED
+}
+
+enum WalletType {
+  PRIMARY
+  COMMISSION
+  ESCROW
+  BONUS
+  GST
+  TDS
+}
