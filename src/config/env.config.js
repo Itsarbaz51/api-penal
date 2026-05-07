@@ -14,4 +14,12 @@ export const envConfig = {
   REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
 
   CRYPTO_SECRET_KEY: process.env.CRYPTO_SECRET_KEY,
+
+  REDIS_HOST: process.env.REDIS_HOST || "127.0.0.1",
+  REDIS_PORT: process.env.REDIS_PORT || 6379,
+
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
 };

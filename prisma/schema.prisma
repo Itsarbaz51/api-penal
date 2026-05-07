@@ -74,56 +74,57 @@ model Package {
 }
 
 model User {
-  id                            String              @id @default(uuid())
-  username                      String              @db.Text
-  fullName                      String              @map("full_name")
-  profileImage                  String              @map("profile_image") @db.Text
-  email                         String              @unique
-  phoneNumber                   String              @unique @map("phone_number")
-  password                      String
-  transactionPin                String?             @map("transaction_pin") @db.Text
-  parentId                      String?             @map("parent_id")
-  status                        UserStatus          @default(ACTIVE)
-  isKycVerified                 Boolean             @default(false) @map("is_kyc_verified")
-  emailSent                     Boolean             @default(false) @map("email_sent")
-  roleId                        String              @map("role_id")
-  packageId                     String?             @map("package_id")
-  refreshToken                  String?             @map("refresh_token") @db.Text
-  passwordResetToken            String?             @map("password_reset_token")
-  passwordResetExpires          DateTime?           @map("password_reset_expires")
-  emailVerificationToken        String?             @map("email_verification_token")
-  emailVerifiedAt               DateTime?           @map("email_verified_at")
-  emailVerificationTokenExpires DateTime?           @map("email_verification_token_expires")
-  createdAt                     DateTime            @default(now()) @map("created_at")
-  updatedAt                     DateTime            @default(now()) @updatedAt @map("updated_at")
-  deletedAt                     DateTime?           @map("deleted_at")
-  deactivationReason            String?             @map("user_deactivation_reason") @db.LongText
-  bankAccounts                  BankDetail[]
-  commissionEarningsCreated     CommissionEarning[] @relation("CommissionEarningCreatedBy")
-  commissionsGiven              CommissionEarning[] @relation("CommissionEarningFromUser")
-  commissionEarnings            CommissionEarning[] @relation("CommissionEarningToUser")
-  commissionSetting             CommissionSetting[]
-  piiConsents                   PiiConsent[]
-  systemSettings                SystemSetting[]
-  transactions                  Transaction[]
-  kycs                          UserKyc[]
-  userPermissions               UserPermission[]
-  parent                        User?               @relation("UserHierarchy", fields: [parentId], references: [id])
-  children                      User[]              @relation("UserHierarchy")
-  role                          Role                @relation(fields: [roleId], references: [id])
-  package                       Package?            @relation(fields: [packageId], references: [id])
-  wallets                       Wallet[]
-  limits                        UserLimit?
-  loginEvents                   LoginEvent[]
-  ledgerEntries                 LedgerEntry[]
-  apiKeys                       ApiKey[]
-  apiAccessTokens               ApiAccessToken[]
-  apiRequestLogs                ApiRequestLog[]
-  rateLimits                    RateLimit[]
-  businessDetail                BusinessDetail?
+  id                        String              @id @default(uuid())
+  username                  String              @db.Text
+  fullName                  String              @map("full_name")
+  profileImage              String              @map("profile_image") @db.Text
+  email                     String              @unique
+  phoneNumber               String              @unique @map("phone_number")
+  password                  String
+  transactionPin            String?             @map("transaction_pin") @db.Text
+  parentId                  String?             @map("parent_id")
+  status                    UserStatus          @default(ACTIVE)
+  isKycVerified             Boolean             @default(false) @map("is_kyc_verified")
+  emailSent                 Boolean             @default(false) @map("email_sent")
+  roleId                    String              @map("role_id")
+  packageId                 String?             @map("package_id")
+  refreshToken              String?             @map("refresh_token") @db.Text
+  passwordForgotToken       String?             @map("password_forgot_token")
+  passwordForgotExpires     DateTime?           @map("password_forgot_expires")
+  lastPasswordForgot        DateTime?           @map("last_password_forgot")
+  lastPasswordChange        DateTime?           @map("last_password_change")
+  createdAt                 DateTime            @default(now()) @map("created_at")
+  updatedAt                 DateTime            @default(now()) @updatedAt @map("updated_at")
+  deletedAt                 DateTime?           @map("deleted_at")
+  lastLoginAt               DateTime?           @map("last_login_at")
+  deactivationReason        String?             @map("user_deactivation_reason") @db.LongText
+  bankAccounts              BankDetail[]
+  commissionEarningsCreated CommissionEarning[] @relation("CommissionEarningCreatedBy")
+  commissionsGiven          CommissionEarning[] @relation("CommissionEarningFromUser")
+  commissionEarnings        CommissionEarning[] @relation("CommissionEarningToUser")
+  commissionSetting         CommissionSetting[]
+  piiConsents               PiiConsent[]
+  systemSettings            SystemSetting[]
+  transactions              Transaction[]
+  kycs                      UserKyc[]
+  userPermissions           UserPermission[]
+  parent                    User?               @relation("UserHierarchy", fields: [parentId], references: [id])
+  children                  User[]              @relation("UserHierarchy")
+  role                      Role                @relation(fields: [roleId], references: [id])
+  package                   Package?            @relation(fields: [packageId], references: [id])
+  wallets                   Wallet[]
+  limits                    UserLimit?
+  loginEvents               LoginEvent[]
+  ledgerEntries             LedgerEntry[]
+  apiKeys                   ApiKey[]
+  apiAccessTokens           ApiAccessToken[]
+  apiRequestLogs            ApiRequestLog[]
+  rateLimits                RateLimit[]
+  businessDetail            BusinessDetail?
 
   @@index([parentId])
   @@index([phoneNumber])
+  @@index([email])
   @@index([roleId], map: "users_role_id_fkey")
   @@map("users")
 }
@@ -457,8 +458,8 @@ model Address {
 }
 
 model Wallet {
-  id     String @id @default(uuid())
-  userId String @map("user_id")
+  id         String     @id @default(uuid())
+  userId     String     @map("user_id")
   walletType WalletType @map("wallet_type")
 
   balance     BigInt

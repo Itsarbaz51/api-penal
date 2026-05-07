@@ -23,7 +23,9 @@ class AuthMiddleware {
           id: true,
           role: true,
           email: true,
-          phone: true,
+          phoneNumber: true,
+          username: true,
+          package: true,
         },
       });
 
