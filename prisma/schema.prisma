@@ -50,17 +50,6 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-model Role {
-  id        String   @id @default(uuid())
-  name      String
-  type      String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  users     User[]
-
-  @@map("roles")
-}
-
 model Package {
   id                 String              @id @default(uuid())
   name               String              @unique
@@ -75,9 +64,11 @@ model Package {
 
 model User {
   id                        String              @id @default(uuid())
-  username                  String              @db.Text
+  registrationNumber        String              @unique @map("registration_number")
   fullName                  String              @map("full_name")
-  profileImage              String              @map("profile_image") @db.Text
+  companyName               String              @map("company_name")
+  companyType               String              @map("company_type") // Proprietorship, Partnership, Pvt Ltd, LLP, etc.
+  profileImage              String?              @map("profile_image") @db.Text
   email                     String              @unique
   phoneNumber               String              @unique @map("phone_number")
   password                  String
@@ -85,8 +76,7 @@ model User {
   parentId                  String?             @map("parent_id")
   status                    UserStatus          @default(ACTIVE)
   isKycVerified             Boolean             @default(false) @map("is_kyc_verified")
-  emailSent                 Boolean             @default(false) @map("email_sent")
-  roleId                    String              @map("role_id")
+  role                      String
   packageId                 String?             @map("package_id")
   refreshToken              String?             @map("refresh_token") @db.Text
   passwordForgotToken       String?             @map("password_forgot_token")
@@ -103,14 +93,12 @@ model User {
   commissionsGiven          CommissionEarning[] @relation("CommissionEarningFromUser")
   commissionEarnings        CommissionEarning[] @relation("CommissionEarningToUser")
   commissionSetting         CommissionSetting[]
-  piiConsents               PiiConsent[]
   systemSettings            SystemSetting[]
   transactions              Transaction[]
-  kycs                      UserKyc[]
+  userKyc                   UserKyc[]
   userPermissions           UserPermission[]
   parent                    User?               @relation("UserHierarchy", fields: [parentId], references: [id])
   children                  User[]              @relation("UserHierarchy")
-  role                      Role                @relation(fields: [roleId], references: [id])
   package                   Package?            @relation(fields: [packageId], references: [id])
   wallets                   Wallet[]
   limits                    UserLimit?
@@ -120,47 +108,14 @@ model User {
   apiAccessTokens           ApiAccessToken[]
   apiRequestLogs            ApiRequestLog[]
   rateLimits                RateLimit[]
-  businessDetail            BusinessDetail?
+  businessKyc               BusinessKyc?
 
   @@index([parentId])
   @@index([phoneNumber])
   @@index([email])
-  @@index([roleId], map: "users_role_id_fkey")
+  @@index([registrationNumber])
+  @@index([role])
   @@map("users")
-}
-
-model BusinessDetail {
-  id String @id @default(uuid())
-
-  userId String @unique @map("user_id")
-
-  businessName       String  @map("business_name")
-  businessType       String? @map("business_type")
-  registrationNumber String? @map("registration_number")
-
-  gstNumber String? @map("gst_number")
-  panNumber String? @map("pan_number")
-
-  addressLine1 String? @map("address_line_1")
-  addressLine2 String? @map("address_line_2")
-
-  city       String?
-  state      String?
-  country    String?
-  postalCode String? @map("postal_code")
-
-  website String?
-  logo    String? @db.Text
-
-  isVerified Boolean @default(false) @map("is_verified")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("business_details")
 }
 
 // API KEY
@@ -246,7 +201,6 @@ model ApiAccessToken {
 }
 
 // API REQUEST LOGS
-
 model ApiRequestLog {
   id String @id @default(uuid())
 
@@ -291,7 +245,6 @@ model ApiRequestLog {
 }
 
 // RATE LIMIT
-
 model RateLimit {
   id String @id @default(uuid())
 
@@ -324,31 +277,49 @@ model RateLimit {
 }
 
 model UserKyc {
-  id                 String       @id @default(uuid())
-  userId             String       @map("user_id")
-  fullName           String       @map("full_name")
-  fatherName         String       @map("father_name")
+  id                 String    @id @default(uuid())
+  registrationNumber String    @unique @map("registration_number")
+  userId             String    @map("user_id")
+  fullName           String    @map("full_name")
   dob                DateTime
   gender             Gender
-  status             KycStatus    @default(PENDING)
-  type               KycTypes     @default(USER_KYC)
-  kycType            String       @default("MANUAL")
-  kycRejectionReason String?      @map("kyc_rejection_reason") @db.LongText
-  addressId          String       @map("address_id")
-  panFile            String       @map("pan_file")
-  aadhaarFile        String       @map("aadhaar_file")
-  addressProofFile   String       @map("address_proof_file")
+  status             KycStatus @default(PENDING)
+  type               KycTypes  @default(USER_KYC)
+  kycType            String    @default("MANUAL")
+  kycRejectionReason String?   @map("kyc_rejection_reason") @db.LongText
+  addressId          String    @map("address_id")
+  panFile            String    @map("pan_file")
+  aadhaarFile        String    @map("aadhaar_file")
+  addressProofFile   String    @map("address_proof_file")
   photo              String
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at")
-  deletedAt          DateTime?    @map("deleted_at")
-  piiConsents        PiiConsent[]
-  address            Address      @relation(fields: [addressId], references: [id])
-  user               User         @relation(fields: [userId], references: [id])
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  address            Address   @relation(fields: [addressId], references: [id])
+  user               User      @relation(fields: [userId], references: [id])
 
   @@index([addressId], map: "user_kyc_address_id_fkey")
   @@index([userId], map: "user_kyc_user_id_fkey")
   @@map("user_kyc")
+}
+
+model BusinessKyc {
+  id                 String    @id @default(uuid())
+  registrationNumber String    @unique @map("registration_number")
+  userId             String    @unique @map("user_id")
+  companyName        String    @map("company_name")
+  type               String    @map("type") // Proprietorship, Partnership, Pvt Ltd, LLP, etc.
+  kycRejectionReason String?   @map("kyc_rejection_reason") @db.LongText
+  documentFile       String    @map("document_file")
+  addressId          String    @map("address_id")
+  status             KycStatus @default(PENDING)
+  rejectionReason    String?   @map("rejection_reason")
+  verifiedAt         DateTime? @map("verified_at")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id])
+  address            Address   @relation(fields: [addressId], references: [id])
+
+  @@map("business_verifications")
 }
 
 model BankDetail {
@@ -445,6 +416,8 @@ model BbpsFetchBill {
 
 model Address {
   id        String   @id @default(uuid())
+  kycId     String   @map("kyc_id")
+  type      String   @default("HOME")
   address   String   @db.LongText
   pinCode   String   @map("pin_code")
   state     String   @map("state")
@@ -452,7 +425,8 @@ model Address {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  UserKyc UserKyc[]
+  userKyc      UserKyc[]
+  businessKycs BusinessKyc[]
 
   @@map("addresses")
 }
@@ -858,24 +832,6 @@ model LedgerEntry {
   @@index([walletId, createdAt])
   @@index([idempotencyKey])
   @@map("ledger_entries")
-}
-
-model PiiConsent {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  userKycId  String?  @map("user_kyc_id")
-  piiType    String   @map("pii_type")
-  piiHash    String   @map("pii_hash")
-  providedAt DateTime @default(now()) @map("provided_at")
-  expiresAt  DateTime @map("expires_at")
-  scope      String
-  createdAt  DateTime @default(now()) @map("create_at")
-  user       User     @relation(fields: [userId], references: [id])
-  userKyc    UserKyc? @relation(fields: [userKycId], references: [id])
-
-  @@unique([userId, piiType, scope])
-  @@index([userKycId], map: "pii_consents_user_kyc_id_fkey")
-  @@map("pii_consents")
 }
 
 enum CommissionStartLevel {

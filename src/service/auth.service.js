@@ -14,17 +14,9 @@ class AuthServices {
       where: {
         OR: [
           { email: identify },
-          { username: identify },
+          { registrationNumber: identify },
           { phoneNumber: identify },
         ],
-      },
-      include: {
-        role: {
-          select: {
-            id: true,
-            type: true,
-          },
-        },
       },
     });
 
@@ -41,7 +33,7 @@ class AuthServices {
     const tokenPayload = {
       id: user?.id,
       email: user.email,
-      role: user.role.type,
+      role: user.role,
     };
 
     const accessToken = generateAccessToken(tokenPayload);

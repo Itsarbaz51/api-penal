@@ -4,37 +4,6 @@ import prisma from "../src/db/db.js";
 async function main() {
   console.log("🚀 Starting seed...");
 
-  // =========================
-  // ROLES
-  // =========================
-
-  const superAdminRole = await prisma.role.upsert({
-    where: {
-      type: "SUPER_ADMIN",
-    },
-
-    update: {},
-
-    create: {
-      name: "Super Admin",
-      type: "SUPER_ADMIN",
-    },
-  });
-
-  const apiHolderRole = await prisma.role.upsert({
-    where: {
-      type: "API_HOLDER",
-    },
-
-    update: {},
-
-    create: {
-      name: "API Holder",
-      type: "API_HOLDER",
-    },
-  });
-
-  console.log("✅ Roles created");
 
   // =========================
   // SUPER ADMIN
@@ -51,71 +20,23 @@ async function main() {
     update: {},
 
     create: {
-      username: "azzunique",
+      registrationNumber: "AZZ8795",
+      companyName: "Azzunique",
+      companyType: "PRIVATE_LIMITED",
 
-      fullName: "Azzunique Super Admin",
-
+      fullName: "Super Admin",
       profileImage: "",
-
       email: "admin@azzunique.com",
-
       phoneNumber: "9999999999",
-
       password: adminPassword,
-
       transactionPin: adminPin,
-
-      roleId: superAdminRole.id,
-
+      role: "SUPER_ADMIN",
       status: "ACTIVE",
-
       isKycVerified: true,
     },
   });
 
   console.log("✅ Super Admin created");
-
-  // =========================
-  // BUSINESS DETAIL
-  // =========================
-
-  await prisma.businessDetail.upsert({
-    where: {
-      userId: admin.id,
-    },
-
-    update: {},
-
-    create: {
-      userId: admin.id,
-
-      businessName: "Azzunique",
-
-      businessType: "Fintech",
-
-      registrationNumber: "AZZ001",
-
-      gstNumber: "08ABCDE1234F1Z5",
-
-      panNumber: "ABCDE1234F",
-
-      addressLine1: "Jaipur Rajasthan",
-
-      city: "Jaipur",
-
-      state: "Rajasthan",
-
-      country: "India",
-
-      postalCode: "302001",
-
-      website: "https://azzunique.com",
-
-      isVerified: true,
-    },
-  });
-
-  console.log("✅ Business detail added");
 
   // =========================
   // WALLETS
