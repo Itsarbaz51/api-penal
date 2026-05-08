@@ -24,7 +24,7 @@ class AuthMiddleware {
           role: true,
           email: true,
           phoneNumber: true,
-          username: true,
+          registrationNumber: true,
           package: true,
         },
       });
