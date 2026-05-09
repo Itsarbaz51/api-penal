@@ -68,7 +68,7 @@ model User {
   fullName                  String              @map("full_name")
   companyName               String              @map("company_name")
   companyType               String              @map("company_type") // Proprietorship, Partnership, Pvt Ltd, LLP, etc.
-  profileImage              String?              @map("profile_image") @db.Text
+  profileImage              String?             @map("profile_image") @db.Text
   email                     String              @unique
   phoneNumber               String              @unique @map("phone_number")
   password                  String
@@ -362,58 +362,6 @@ model Beneficiary {
   @@map("beneficiarys")
 }
 
-model BbpsCategory {
-  id       String @id @default(uuid())
-  biller   String
-  category String
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([biller])
-  @@map("bbps_categories")
-}
-
-model BbpsBiller {
-  id             String @id @default(uuid())
-  billerId       String @unique @map("biller_id")
-  billerName     String @map("biller_name")
-  category       String
-  customerParams Json   @map("customer_params")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@index([category])
-  @@map("bbps_billers")
-}
-
-model BbpsFetchBill {
-  id     String @id @default(uuid())
-  userId String @map("user_id")
-
-  serviceProviderMappingId String @map("service_provider_mapping_id")
-
-  billerId          String  @map("biller_id")
-  reference         String
-  fetchId           String  @unique @map("fetch_id")
-  customerParams    Json?   @map("customer_params")
-  customerParamsKey String? @map("customer_params_key")
-
-  amount BigInt
-  status String
-
-  customerName String?   @map("customer_name")
-  dueDate      DateTime? @map("due_date")
-
-  rawResponse Json? @map("raw_response")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([userId, billerId, customerParamsKey])
-  @@map("bbps_fetch_bill")
-}
-
 model Address {
   id        String   @id @default(uuid())
   kycId     String   @map("kyc_id")
@@ -436,8 +384,8 @@ model Wallet {
   userId     String     @map("user_id")
   walletType WalletType @map("wallet_type")
 
-  balance     BigInt
-  holdBalance BigInt @map("hold_balance")
+  balance     Float
+  holdBalance Float @map("hold_balance")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("update_at")
@@ -454,9 +402,9 @@ model Wallet {
 model UserLimit {
   userId String @id @map("user_id")
 
-  dailyLimit   BigInt?
-  monthlyLimit BigInt?
-  perTxnLimit  BigInt?
+  dailyLimit   Float?
+  monthlyLimit Float?
+  perTxnLimit  Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -476,13 +424,13 @@ model CommissionSetting {
 
   mode  PricingMode    @default(NONE)
   type  CommissionType @default(NONE)
-  value BigInt
+  value Float
 
   applyTDS   Boolean @default(false) @map("apply_tds")
-  tdsPercent BigInt? @map("tds_percent")
+  tdsPercent Float?  @map("tds_percent")
 
   applyGST   Boolean @default(false) @map("apply_gst")
-  gstPercent BigInt? @map("gst_percent")
+  gstPercent Float?  @map("gst_percent")
 
   createdBy String  @map("created_by")
   isActive  Boolean @default(true) @map("is_active")
@@ -509,10 +457,10 @@ model CommissionSlab {
   id                  String @id @default(uuid())
   commissionSettingId String @map("commission_setting_id")
 
-  minAmount BigInt @map("min_amount")
-  maxAmount BigInt @map("max_amount")
+  minAmount Float @map("min_amount")
+  maxAmount Float @map("max_amount")
 
-  value             BigInt
+  value             Float
   CommissionSetting CommissionSetting @relation(fields: [commissionSettingId], references: [id])
   createdAt         DateTime          @default(now())
 
@@ -527,7 +475,7 @@ model CommissionPaymentMethod {
   commissionSettingId String         @map("commission_setting_id")
   mode                PricingMode    @default(NONE)
   type                CommissionType @default(NONE)
-  value               BigInt
+  value               Float
 
   paymentMethod String? @map("payment_method")
   network       String? // optional visa, rupay
@@ -536,10 +484,10 @@ model CommissionPaymentMethod {
   operator      String? // JVVNL / AIRTEL
 
   applyTDS   Boolean @default(false) @map("apply_tds")
-  tdsPercent BigInt? @map("tds_percent")
+  tdsPercent Float?  @map("tds_percent")
 
   applyGST   Boolean @default(false) @map("apply_gst")
-  gstPercent BigInt? @map("gst_percent")
+  gstPercent Float?  @map("gst_percent")
 
   createdAt         DateTime          @default(now()) @map("created_at")
   commissionSetting CommissionSetting @relation(fields: [commissionSettingId], references: [id])
@@ -557,12 +505,12 @@ model CommissionEarning {
 
   serviceProviderMappingId String @map("service_provider_mapping_id")
 
-  amount BigInt
+  amount Float
 
   mode PricingMode
   type CommissionType
 
-  netAmount BigInt @map("net_amount")
+  netAmount Float @map("net_amount")
 
   metadata Json? @map("meta_data")
 
@@ -626,15 +574,15 @@ model ServiceProviderMapping {
   mode             PricingMode      @default(NONE)
   pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
 
-  providerCost         BigInt?              @map("provider_cost")
-  sellingPrice         BigInt?              @map("selling_price")
+  providerCost         Float?               @map("provider_cost")
+  sellingPrice         Float?               @map("selling_price")
   commissionStartLevel CommissionStartLevel @default(NONE)
 
   applyTDS   Boolean @default(false) @map("apply_tds")
-  tdsPercent BigInt? @map("tds_percent")
+  tdsPercent Float?  @map("tds_percent")
 
   applyGST   Boolean @default(false) @map("apply_gst")
-  gstPercent BigInt? @map("gst_percent")
+  gstPercent Float?  @map("gst_percent")
 
   config Json?
 
@@ -665,11 +613,11 @@ model ProviderSlab {
 
   serviceProviderMappingId String @map("service_provider_mapping_id")
 
-  minAmount BigInt @map("min_amount")
-  maxAmount BigInt @map("max_amount")
+  minAmount Float @map("min_amount")
+  maxAmount Float @map("max_amount")
 
-  providerCost BigInt   @map("provider_cost")
-  sellingPrice BigInt?  @map("selling_price")
+  providerCost Float    @map("provider_cost")
+  sellingPrice Float?   @map("selling_price")
   createdAt    DateTime @default(now()) @map("created_at")
 
   mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
@@ -691,15 +639,15 @@ model PaymentMethodChargeProvider {
   operator    String? // JVVNL code  / AIRTEL code
 
   applyTDS   Boolean @default(false) @map("apply_tds")
-  tdsPercent BigInt? @map("tds_percent")
+  tdsPercent Float?  @map("tds_percent")
 
   applyGST   Boolean @default(false) @map("apply_gst")
-  gstPercent BigInt? @map("gst_percent")
+  gstPercent Float?  @map("gst_percent")
 
   mode             PricingMode      @default(NONE)
   pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
 
-  value   BigInt
+  value   Float
   mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -772,20 +720,21 @@ model Transaction {
   idempotencyKey String @unique @map("idempotency_key")
   txnId          String @unique @map("txn_id")
 
-  amount    BigInt
-  netAmount BigInt @map("net_amount")
+  amount    Float
+  netAmount Float @map("net_amount")
 
   status                   String  @default("PENDING")
   serviceProviderMappingId String? @map("service_provider_mapping_id")
   pricing                  Json?
 
-  userId      String @map("user_id")
-  walletId    String @map("wallet_id")
-  apiEntityId String @unique @map("api_entity_id")
+  userId   String @map("user_id")
+  walletId String @map("wallet_id")
 
-  providerReference String? @map("provider_reference")
-  providerResponse  Json?   @map("provider_response")
-  retryCount        Int     @default(0) @map("retry_count")
+  providerReference    String? @map("provider_reference")
+  requestInit          Json?   @map("request_init")
+  providerResponseInit Json?   @map("provider_response_init")
+  providerResponse     Json?   @map("provider_response")
+  retryCount           Int     @default(0) @map("retry_count")
 
   initiatedAt   DateTime  @default(now()) @map("initiated_at")
   processedAt   DateTime? @map("processed_at")
@@ -813,8 +762,8 @@ model LedgerEntry {
   entryType     LedgerEntryType @map("entry_type")
   referenceType String          @map("reference_type")
 
-  amount         BigInt
-  runningBalance BigInt       @map("running_balance")
+  amount         Float
+  runningBalance Float        @map("running_balance")
   narration      String       @db.Text
   metadata       Json?
   idempotencyKey String?      @map("idempotency_key")
@@ -832,6 +781,58 @@ model LedgerEntry {
   @@index([walletId, createdAt])
   @@index([idempotencyKey])
   @@map("ledger_entries")
+}
+
+model BbpsCategory {
+  id       String @id @default(uuid())
+  biller   String
+  category String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([biller])
+  @@map("bbps_categories")
+}
+
+model BbpsBiller {
+  id             String @id @default(uuid())
+  billerId       String @unique @map("biller_id")
+  billerName     String @map("biller_name")
+  category       String
+  customerParams Json   @map("customer_params")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("bbps_billers")
+}
+
+model BbpsFetchBill {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  serviceProviderMappingId String @map("service_provider_mapping_id")
+
+  billerId          String  @map("biller_id")
+  reference         String
+  fetchId           String  @unique @map("fetch_id")
+  customerParams    Json?   @map("customer_params")
+  customerParamsKey String? @map("customer_params_key")
+
+  amount Float
+  status String
+
+  customerName String?   @map("customer_name")
+  dueDate      DateTime? @map("due_date")
+
+  rawResponse Json? @map("raw_response")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, billerId, customerParamsKey])
+  @@map("bbps_fetch_bill")
 }
 
 enum CommissionStartLevel {
