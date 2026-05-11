@@ -5,6 +5,7 @@ import userRoute from "./user.routes.js";
 import serviceRoute from "./service.route.js";
 import providerRoute from "./provider.route.js";
 import serviceProviderRoute from "./service-provider.route.js";
+import commissionSettingRoute from "./commission-setting.route.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/users", userRoute);
 router.use("/services", serviceRoute);
 router.use("/providers", providerRoute);
 router.use("/service-provider", serviceProviderRoute);
+router.use("/commission-settings", commissionSettingRoute);
 
 export default router;
