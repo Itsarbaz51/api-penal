@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import CryptoService from "../utils/crypto.utils.js";
 import HelperUtils from "../utils/helper.utils.js";
 import S3ServiceUtils from "../utils/S3Service.utils.js";
+import WalletService from "./wallet.service.js";
 
 class UserService {
   static async createUser(payload, currentUser) {
@@ -70,6 +71,18 @@ class UserService {
         package: true,
       },
     });
+
+    await Promise.all([
+      WalletService.create({
+        userId: user.id,
+        walletType: "PRIMARY",
+      }),
+
+      WalletService.create({
+        userId: user.id,
+        walletType: "COMMISSION",
+      }),
+    ]);
 
     return {
       ...user,

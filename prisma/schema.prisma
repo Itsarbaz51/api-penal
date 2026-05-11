@@ -58,6 +58,7 @@ model Package {
   packagePermissions PackagePermission[]
   users              User[]
   commissionSettings CommissionSetting[]
+  userLimits         UserLimit[]
 
   @@map("packages")
 }
@@ -400,17 +401,22 @@ model Wallet {
 }
 
 model UserLimit {
-  userId String @id @map("user_id")
+  id        String  @id @default(uuid())
+  userId    String? @map("user_id")
+  packageId String? @map("package_id")
 
-  dailyLimit   Float?
-  monthlyLimit Float?
-  perTxnLimit  Float?
+  dailyLimit   Float? @map("daily_limit")
+  monthlyLimit Float? @map("monthly_limit")
+  perTxnLimit  Float? @map("per_txn_limit")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("update_at")
 
-  user User @relation(fields: [userId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+  package Package? @relation(fields: [packageId], references: [id])
 
+  @@unique([userId])
+  @@index([dailyLimit, monthlyLimit, perTxnLimit])
   @@map("user_limits")
 }
 
