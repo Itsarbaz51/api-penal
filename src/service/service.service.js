@@ -59,7 +59,7 @@ class ServiceService {
         skip,
         take: limit,
         include: {
-          mappings: {
+          serviceProviders: {
             include: { provider: true },
           },
         },
