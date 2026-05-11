@@ -551,9 +551,13 @@ model Service {
 }
 
 model Provider {
-  id       String  @id @default(uuid())
-  name     String
-  code     String  @unique
+  id   String @id @default(uuid())
+  name String
+  code String @unique
+
+  // BBPS / PG / DMT / PAYOUT / AEPS
+  type String?
+
   isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -570,90 +574,88 @@ model ServiceProviderMapping {
   serviceId  String @map("service_id")
   providerId String @map("provider_id")
 
-  // COMMISSION | SURCHARGE
-  mode             PricingMode      @default(NONE)
-  pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
+  baseUrl String? @map("base_url")
 
-  providerCost         Float?               @map("provider_cost")
-  sellingPrice         Float?               @map("selling_price")
-  commissionStartLevel CommissionStartLevel @default(NONE)
-
-  applyTDS   Boolean @default(false) @map("apply_tds")
-  tdsPercent Float?  @map("tds_percent")
-
-  applyGST   Boolean @default(false) @map("apply_gst")
-  gstPercent Float?  @map("gst_percent")
-
+  // COMMON CONFIG
   config Json?
 
-  priority             Int     @default(1)
-  isActive             Boolean @default(true) @map("is_active")
-  supportsSlab         Boolean @default(false) @map("support_slab")
+  // ROUTING
+  priority Int @default(1)
+
+  // FEATURES
+  supportsSlab         Boolean @default(false) @map("supports_slab")
   supportPaymentMethod Boolean @default(false) @map("support_payment_method")
+
+  isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  service      Service       @relation(fields: [serviceId], references: [id])
-  provider     Provider      @relation(fields: [providerId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+
   transactions Transaction[]
 
-  ledgerEntries        LedgerEntry[]
-  commissionSettings   CommissionSetting[]
-  commissionEarnings   CommissionEarning[]
-  providerSlabs        ProviderSlab[]
-  paymentMethodCharges PaymentMethodChargeProvider[]
+  ledgerEntries      LedgerEntry[]
+  commissionSettings CommissionSetting[]
+  commissionEarnings CommissionEarning[]
+
+  chargeRules ProviderChargeRule[]
 
   @@unique([serviceId, providerId])
+  @@index([serviceId])
+  @@index([providerId])
+  @@index([priority])
   @@map("service_provider_mappings")
 }
 
-model ProviderSlab {
-  id String @id @default(uuid())
-
+model ProviderChargeRule {
+  id                       String @id @default(uuid())
   serviceProviderMappingId String @map("service_provider_mapping_id")
 
-  minAmount Float @map("min_amount")
-  maxAmount Float @map("max_amount")
+  // PAYMENT GATEWAY
+  paymentMethod String? @map("payment_method")
+  network       String?
 
-  providerCost Float    @map("provider_cost")
-  sellingPrice Float?   @map("selling_price")
-  createdAt    DateTime @default(now()) @map("created_at")
+  // BBPS / RECHARGE
+  category     String?
+  operator     String?
+  operatorCode String? @map("operator_code")
 
-  mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
+  // DMT / PAYOUT
+  bankCode        String? @map("bank_code")
+  transactionType String? @map("transaction_type")
 
-  @@index([serviceProviderMappingId, minAmount, maxAmount])
-  @@map("provider_slabs")
-}
+  // SLAB
+  minAmount Float? @map("min_amount")
+  maxAmount Float? @map("max_amount")
 
-model PaymentMethodChargeProvider {
-  id String @id @default(uuid())
+  // PRICING
+  mode             PricingMode      @default(NONE)
+  pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
+  value            Float
+  providerCost     Float?           @map("provider_cost")
 
-  serviceProviderMappingId String @map("service_provider_mapping_id")
-
-  paymentMethod String? @map("payment_method") // card / upi  
-  network       String? // visa / rupay
-
-  category    String? // DTH, MOBILE, ELECTRICITY
-  serviceType String? // BBPS / PAYMENT / PAYOUT / KYC
-  operator    String? // JVVNL code  / AIRTEL code
-
+  // TAX
   applyTDS   Boolean @default(false) @map("apply_tds")
   tdsPercent Float?  @map("tds_percent")
-
   applyGST   Boolean @default(false) @map("apply_gst")
   gstPercent Float?  @map("gst_percent")
 
-  mode             PricingMode      @default(NONE)
-  pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
+  // FLAGS
+  isActive   Boolean                @default(true) @map("is_active")
+  config     Json?
+  handlePath String?                @map("handle_path")
+  createdAt  DateTime               @default(now()) @map("created_at")
+  mapping    ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
 
-  value   Float
-  mapping ServiceProviderMapping @relation(fields: [serviceProviderMappingId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([serviceProviderMappingId, paymentMethod, network])
-  @@map("payment_method_charge_provider")
+  @@index([serviceProviderMappingId])
+  @@index([paymentMethod, network])
+  @@index([operatorCode])
+  @@index([bankCode])
+  @@index([transactionType])
+  @@index([minAmount, maxAmount])
+  @@map("provider_charge_rules")
 }
 
 model UserPermission {

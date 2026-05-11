@@ -35,18 +35,6 @@ CREATE TABLE `audit_logs` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `roles` (
-    `id` VARCHAR(191) NOT NULL,
-    `name` VARCHAR(191) NOT NULL,
-    `code` VARCHAR(191) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `roles_code_key`(`code`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `packages` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
@@ -60,9 +48,11 @@ CREATE TABLE `packages` (
 -- CreateTable
 CREATE TABLE `users` (
     `id` VARCHAR(191) NOT NULL,
-    `username` TEXT NOT NULL,
+    `registration_number` VARCHAR(191) NOT NULL,
     `full_name` VARCHAR(191) NOT NULL,
-    `profile_image` TEXT NOT NULL,
+    `company_name` VARCHAR(191) NOT NULL,
+    `company_type` VARCHAR(191) NOT NULL,
+    `profile_image` TEXT NULL,
     `email` VARCHAR(191) NOT NULL,
     `phone_number` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
@@ -70,25 +60,27 @@ CREATE TABLE `users` (
     `parent_id` VARCHAR(191) NULL,
     `status` ENUM('ACTIVE', 'IN_ACTIVE', 'DELETE') NOT NULL DEFAULT 'ACTIVE',
     `is_kyc_verified` BOOLEAN NOT NULL DEFAULT false,
-    `email_sent` BOOLEAN NOT NULL DEFAULT false,
-    `role_id` VARCHAR(191) NOT NULL,
+    `role` VARCHAR(191) NOT NULL,
+    `package_id` VARCHAR(191) NULL,
     `refresh_token` TEXT NULL,
-    `password_reset_token` VARCHAR(191) NULL,
-    `password_reset_expires` DATETIME(3) NULL,
-    `email_verification_token` VARCHAR(191) NULL,
-    `email_verified_at` DATETIME(3) NULL,
-    `email_verification_token_expires` DATETIME(3) NULL,
+    `password_forgot_token` VARCHAR(191) NULL,
+    `password_forgot_expires` DATETIME(3) NULL,
+    `last_password_forgot` DATETIME(3) NULL,
+    `last_password_change` DATETIME(3) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `deleted_at` DATETIME(3) NULL,
+    `last_login_at` DATETIME(3) NULL,
     `user_deactivation_reason` LONGTEXT NULL,
-    `packageId` VARCHAR(191) NULL,
 
+    UNIQUE INDEX `users_registration_number_key`(`registration_number`),
     UNIQUE INDEX `users_email_key`(`email`),
     UNIQUE INDEX `users_phone_number_key`(`phone_number`),
     INDEX `users_parent_id_idx`(`parent_id`),
     INDEX `users_phone_number_idx`(`phone_number`),
-    INDEX `users_role_id_fkey`(`role_id`),
+    INDEX `users_email_idx`(`email`),
+    INDEX `users_registration_number_idx`(`registration_number`),
+    INDEX `users_role_idx`(`role`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -187,9 +179,9 @@ CREATE TABLE `rate_limits` (
 -- CreateTable
 CREATE TABLE `user_kyc` (
     `id` VARCHAR(191) NOT NULL,
+    `registration_number` VARCHAR(191) NOT NULL,
     `user_id` VARCHAR(191) NOT NULL,
     `full_name` VARCHAR(191) NOT NULL,
-    `father_name` VARCHAR(191) NOT NULL,
     `dob` DATETIME(3) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHER') NOT NULL,
     `status` ENUM('PENDING', 'VERIFIED', 'REJECT') NOT NULL DEFAULT 'PENDING',
@@ -203,10 +195,31 @@ CREATE TABLE `user_kyc` (
     `photo` VARCHAR(191) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `deleted_at` DATETIME(3) NULL,
 
+    UNIQUE INDEX `user_kyc_registration_number_key`(`registration_number`),
     INDEX `user_kyc_address_id_fkey`(`address_id`),
     INDEX `user_kyc_user_id_fkey`(`user_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `business_verifications` (
+    `id` VARCHAR(191) NOT NULL,
+    `registration_number` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
+    `company_name` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(191) NOT NULL,
+    `kyc_rejection_reason` LONGTEXT NULL,
+    `document_file` VARCHAR(191) NOT NULL,
+    `address_id` VARCHAR(191) NOT NULL,
+    `status` ENUM('PENDING', 'VERIFIED', 'REJECT') NOT NULL DEFAULT 'PENDING',
+    `rejection_reason` VARCHAR(191) NULL,
+    `verified_at` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `business_verifications_registration_number_key`(`registration_number`),
+    UNIQUE INDEX `business_verifications_user_id_key`(`user_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -252,57 +265,10 @@ CREATE TABLE `beneficiarys` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `bbps_categories` (
-    `id` VARCHAR(191) NOT NULL,
-    `biller` VARCHAR(191) NOT NULL,
-    `category` VARCHAR(191) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `bbps_categories_biller_key`(`biller`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `bbps_billers` (
-    `id` VARCHAR(191) NOT NULL,
-    `biller_id` VARCHAR(191) NOT NULL,
-    `biller_name` VARCHAR(191) NOT NULL,
-    `category` VARCHAR(191) NOT NULL,
-    `customer_params` JSON NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `bbps_billers_biller_id_key`(`biller_id`),
-    INDEX `bbps_billers_category_idx`(`category`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `bbps_fetch_bill` (
-    `id` VARCHAR(191) NOT NULL,
-    `user_id` VARCHAR(191) NOT NULL,
-    `service_provider_mapping_id` VARCHAR(191) NOT NULL,
-    `biller_id` VARCHAR(191) NOT NULL,
-    `reference` VARCHAR(191) NOT NULL,
-    `fetch_id` VARCHAR(191) NOT NULL,
-    `customer_params` JSON NULL,
-    `customer_params_key` VARCHAR(191) NULL,
-    `amount` BIGINT NOT NULL,
-    `status` VARCHAR(191) NOT NULL,
-    `customer_name` VARCHAR(191) NULL,
-    `due_date` DATETIME(3) NULL,
-    `raw_response` JSON NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `bbps_fetch_bill_fetch_id_key`(`fetch_id`),
-    INDEX `bbps_fetch_bill_user_id_biller_id_customer_params_key_idx`(`user_id`, `biller_id`, `customer_params_key`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `addresses` (
     `id` VARCHAR(191) NOT NULL,
+    `kyc_id` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(191) NOT NULL DEFAULT 'HOME',
     `address` LONGTEXT NOT NULL,
     `pin_code` VARCHAR(191) NOT NULL,
     `state` VARCHAR(191) NOT NULL,
@@ -318,10 +284,8 @@ CREATE TABLE `wallets` (
     `id` VARCHAR(191) NOT NULL,
     `user_id` VARCHAR(191) NOT NULL,
     `wallet_type` ENUM('PRIMARY', 'COMMISSION', 'ESCROW', 'BONUS', 'GST', 'TDS') NOT NULL,
-    `currency` ENUM('INR', 'USD', 'EUR', 'GBP', 'AED') NOT NULL DEFAULT 'INR',
-    `balance` BIGINT NOT NULL,
-    `hold_balance` BIGINT NOT NULL,
-    `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `balance` DOUBLE NOT NULL,
+    `hold_balance` DOUBLE NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `update_at` DATETIME(3) NOT NULL,
 
@@ -333,9 +297,9 @@ CREATE TABLE `wallets` (
 -- CreateTable
 CREATE TABLE `user_limits` (
     `user_id` VARCHAR(191) NOT NULL,
-    `dailyLimit` BIGINT NULL,
-    `monthlyLimit` BIGINT NULL,
-    `perTxnLimit` BIGINT NULL,
+    `dailyLimit` DOUBLE NULL,
+    `monthlyLimit` DOUBLE NULL,
+    `perTxnLimit` DOUBLE NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -351,11 +315,11 @@ CREATE TABLE `commission_settings` (
     `serviceProviderMappingId` VARCHAR(191) NOT NULL,
     `mode` ENUM('NONE', 'COMMISSION', 'SURCHARGE') NOT NULL DEFAULT 'NONE',
     `type` ENUM('NONE', 'FLAT', 'PERCENTAGE') NOT NULL DEFAULT 'NONE',
-    `value` BIGINT NOT NULL,
+    `value` DOUBLE NOT NULL,
     `apply_tds` BOOLEAN NOT NULL DEFAULT false,
-    `tds_percent` BIGINT NULL,
+    `tds_percent` DOUBLE NULL,
     `apply_gst` BOOLEAN NOT NULL DEFAULT false,
-    `gst_percent` BIGINT NULL,
+    `gst_percent` DOUBLE NULL,
     `created_by` VARCHAR(191) NOT NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -373,9 +337,9 @@ CREATE TABLE `commission_settings` (
 CREATE TABLE `commission_slabs` (
     `id` VARCHAR(191) NOT NULL,
     `commission_setting_id` VARCHAR(191) NOT NULL,
-    `min_amount` BIGINT NOT NULL,
-    `max_amount` BIGINT NOT NULL,
-    `value` BIGINT NOT NULL,
+    `min_amount` DOUBLE NOT NULL,
+    `max_amount` DOUBLE NOT NULL,
+    `value` DOUBLE NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `commission_slabs_min_amount_max_amount_idx`(`min_amount`, `max_amount`),
@@ -389,16 +353,16 @@ CREATE TABLE `commission_payment_methods` (
     `commission_setting_id` VARCHAR(191) NOT NULL,
     `mode` ENUM('NONE', 'COMMISSION', 'SURCHARGE') NOT NULL DEFAULT 'NONE',
     `type` ENUM('NONE', 'FLAT', 'PERCENTAGE') NOT NULL DEFAULT 'NONE',
-    `value` BIGINT NOT NULL,
+    `value` DOUBLE NOT NULL,
     `payment_method` VARCHAR(191) NULL,
     `network` VARCHAR(191) NULL,
     `category` VARCHAR(191) NULL,
     `serviceType` VARCHAR(191) NULL,
     `operator` VARCHAR(191) NULL,
     `apply_tds` BOOLEAN NOT NULL DEFAULT false,
-    `tds_percent` BIGINT NULL,
+    `tds_percent` DOUBLE NULL,
     `apply_gst` BOOLEAN NOT NULL DEFAULT false,
-    `gst_percent` BIGINT NULL,
+    `gst_percent` DOUBLE NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `commission_payment_methods_payment_method_network_idx`(`payment_method`, `network`),
@@ -413,10 +377,10 @@ CREATE TABLE `commission_earnings` (
     `user_id` VARCHAR(191) NOT NULL,
     `from_user_id` VARCHAR(191) NULL,
     `service_provider_mapping_id` VARCHAR(191) NOT NULL,
-    `amount` BIGINT NOT NULL,
+    `amount` DOUBLE NOT NULL,
     `mode` ENUM('NONE', 'COMMISSION', 'SURCHARGE') NOT NULL,
     `type` ENUM('NONE', 'FLAT', 'PERCENTAGE') NOT NULL,
-    `net_amount` BIGINT NOT NULL,
+    `net_amount` DOUBLE NOT NULL,
     `meta_data` JSON NULL,
     `created_by` VARCHAR(191) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -446,6 +410,7 @@ CREATE TABLE `providers` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `code` VARCHAR(191) NOT NULL,
+    `type` VARCHAR(191) NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -459,60 +424,54 @@ CREATE TABLE `service_provider_mappings` (
     `id` VARCHAR(191) NOT NULL,
     `service_id` VARCHAR(191) NOT NULL,
     `provider_id` VARCHAR(191) NOT NULL,
-    `mode` ENUM('NONE', 'COMMISSION', 'SURCHARGE') NOT NULL DEFAULT 'NONE',
-    `pricing_value_type` ENUM('NONE', 'FLAT', 'PERCENTAGE') NOT NULL DEFAULT 'NONE',
-    `provider_cost` BIGINT NULL,
-    `selling_price` BIGINT NULL,
-    `commissionStartLevel` ENUM('ADMIN_ONLY', 'NONE') NOT NULL DEFAULT 'NONE',
-    `apply_tds` BOOLEAN NOT NULL DEFAULT false,
-    `tds_percent` BIGINT NULL,
-    `apply_gst` BOOLEAN NOT NULL DEFAULT false,
-    `gst_percent` BIGINT NULL,
+    `base_url` VARCHAR(191) NULL,
     `config` JSON NULL,
     `priority` INTEGER NOT NULL DEFAULT 1,
-    `is_active` BOOLEAN NOT NULL DEFAULT true,
-    `support_slab` BOOLEAN NOT NULL DEFAULT false,
+    `supports_slab` BOOLEAN NOT NULL DEFAULT false,
     `support_payment_method` BOOLEAN NOT NULL DEFAULT false,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `service_provider_mappings_service_id_idx`(`service_id`),
+    INDEX `service_provider_mappings_provider_id_idx`(`provider_id`),
+    INDEX `service_provider_mappings_priority_idx`(`priority`),
     UNIQUE INDEX `service_provider_mappings_service_id_provider_id_key`(`service_id`, `provider_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `provider_slabs` (
-    `id` VARCHAR(191) NOT NULL,
-    `service_provider_mapping_id` VARCHAR(191) NOT NULL,
-    `min_amount` BIGINT NOT NULL,
-    `max_amount` BIGINT NOT NULL,
-    `provider_cost` BIGINT NOT NULL,
-    `selling_price` BIGINT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    INDEX `provider_slabs_service_provider_mapping_id_min_amount_max_am_idx`(`service_provider_mapping_id`, `min_amount`, `max_amount`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `payment_method_charge_provider` (
+CREATE TABLE `provider_charge_rules` (
     `id` VARCHAR(191) NOT NULL,
     `service_provider_mapping_id` VARCHAR(191) NOT NULL,
     `payment_method` VARCHAR(191) NULL,
     `network` VARCHAR(191) NULL,
     `category` VARCHAR(191) NULL,
-    `serviceType` VARCHAR(191) NULL,
     `operator` VARCHAR(191) NULL,
-    `apply_tds` BOOLEAN NOT NULL DEFAULT false,
-    `tds_percent` BIGINT NULL,
-    `apply_gst` BOOLEAN NOT NULL DEFAULT false,
-    `gst_percent` BIGINT NULL,
+    `operator_code` VARCHAR(191) NULL,
+    `bank_code` VARCHAR(191) NULL,
+    `transaction_type` VARCHAR(191) NULL,
+    `min_amount` DOUBLE NULL,
+    `max_amount` DOUBLE NULL,
     `mode` ENUM('NONE', 'COMMISSION', 'SURCHARGE') NOT NULL DEFAULT 'NONE',
     `pricing_value_type` ENUM('NONE', 'FLAT', 'PERCENTAGE') NOT NULL DEFAULT 'NONE',
-    `value` BIGINT NOT NULL,
+    `value` DOUBLE NOT NULL,
+    `provider_cost` DOUBLE NULL,
+    `apply_tds` BOOLEAN NOT NULL DEFAULT false,
+    `tds_percent` DOUBLE NULL,
+    `apply_gst` BOOLEAN NOT NULL DEFAULT false,
+    `gst_percent` DOUBLE NULL,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `config` JSON NULL,
+    `handle_path` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `payment_method_charge_provider_service_provider_mapping_id_p_idx`(`service_provider_mapping_id`, `payment_method`, `network`),
+    INDEX `provider_charge_rules_service_provider_mapping_id_idx`(`service_provider_mapping_id`),
+    INDEX `provider_charge_rules_payment_method_network_idx`(`payment_method`, `network`),
+    INDEX `provider_charge_rules_operator_code_idx`(`operator_code`),
+    INDEX `provider_charge_rules_bank_code_idx`(`bank_code`),
+    INDEX `provider_charge_rules_transaction_type_idx`(`transaction_type`),
+    INDEX `provider_charge_rules_min_amount_max_amount_idx`(`min_amount`, `max_amount`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -578,15 +537,16 @@ CREATE TABLE `transactions` (
     `id` VARCHAR(191) NOT NULL,
     `idempotency_key` VARCHAR(191) NOT NULL,
     `txn_id` VARCHAR(191) NOT NULL,
-    `amount` BIGINT NOT NULL,
-    `net_amount` BIGINT NOT NULL,
+    `amount` DOUBLE NOT NULL,
+    `net_amount` DOUBLE NOT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
     `service_provider_mapping_id` VARCHAR(191) NULL,
     `pricing` JSON NULL,
     `user_id` VARCHAR(191) NOT NULL,
     `wallet_id` VARCHAR(191) NOT NULL,
-    `api_entity_id` VARCHAR(191) NOT NULL,
     `provider_reference` VARCHAR(191) NULL,
+    `request_init` JSON NULL,
+    `provider_response_init` JSON NULL,
     `provider_response` JSON NULL,
     `retry_count` INTEGER NOT NULL DEFAULT 0,
     `initiated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -596,7 +556,6 @@ CREATE TABLE `transactions` (
 
     UNIQUE INDEX `transactions_idempotency_key_key`(`idempotency_key`),
     UNIQUE INDEX `transactions_txn_id_key`(`txn_id`),
-    UNIQUE INDEX `transactions_api_entity_id_key`(`api_entity_id`),
     INDEX `transactions_user_id_status_idx`(`user_id`, `status`),
     INDEX `transactions_status_initiated_at_idx`(`status`, `initiated_at`),
     PRIMARY KEY (`id`)
@@ -609,8 +568,8 @@ CREATE TABLE `ledger_entries` (
     `wallet_id` VARCHAR(191) NOT NULL,
     `entry_type` ENUM('DEBIT', 'CREDIT') NOT NULL,
     `reference_type` VARCHAR(191) NOT NULL,
-    `amount` BIGINT NOT NULL,
-    `running_balance` BIGINT NOT NULL,
+    `amount` DOUBLE NOT NULL,
+    `running_balance` DOUBLE NOT NULL,
     `narration` TEXT NOT NULL,
     `metadata` JSON NULL,
     `idempotency_key` VARCHAR(191) NULL,
@@ -626,19 +585,51 @@ CREATE TABLE `ledger_entries` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `pii_consents` (
+CREATE TABLE `bbps_categories` (
+    `id` VARCHAR(191) NOT NULL,
+    `biller` VARCHAR(191) NOT NULL,
+    `category` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `bbps_categories_biller_key`(`biller`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `bbps_billers` (
+    `id` VARCHAR(191) NOT NULL,
+    `biller_id` VARCHAR(191) NOT NULL,
+    `biller_name` VARCHAR(191) NOT NULL,
+    `category` VARCHAR(191) NOT NULL,
+    `customer_params` JSON NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `bbps_billers_biller_id_key`(`biller_id`),
+    INDEX `bbps_billers_category_idx`(`category`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `bbps_fetch_bill` (
     `id` VARCHAR(191) NOT NULL,
     `user_id` VARCHAR(191) NOT NULL,
-    `user_kyc_id` VARCHAR(191) NULL,
-    `pii_type` VARCHAR(191) NOT NULL,
-    `pii_hash` VARCHAR(191) NOT NULL,
-    `provided_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `expires_at` DATETIME(3) NOT NULL,
-    `scope` VARCHAR(191) NOT NULL,
-    `create_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `service_provider_mapping_id` VARCHAR(191) NOT NULL,
+    `biller_id` VARCHAR(191) NOT NULL,
+    `reference` VARCHAR(191) NOT NULL,
+    `fetch_id` VARCHAR(191) NOT NULL,
+    `customer_params` JSON NULL,
+    `customer_params_key` VARCHAR(191) NULL,
+    `amount` DOUBLE NOT NULL,
+    `status` VARCHAR(191) NOT NULL,
+    `customer_name` VARCHAR(191) NULL,
+    `due_date` DATETIME(3) NULL,
+    `raw_response` JSON NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `pii_consents_user_kyc_id_fkey`(`user_kyc_id`),
-    UNIQUE INDEX `pii_consents_user_id_pii_type_scope_key`(`user_id`, `pii_type`, `scope`),
+    UNIQUE INDEX `bbps_fetch_bill_fetch_id_key`(`fetch_id`),
+    INDEX `bbps_fetch_bill_user_id_biller_id_customer_params_key_idx`(`user_id`, `biller_id`, `customer_params_key`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -649,10 +640,7 @@ ALTER TABLE `login_events` ADD CONSTRAINT `login_events_user_id_fkey` FOREIGN KE
 ALTER TABLE `users` ADD CONSTRAINT `users_parent_id_fkey` FOREIGN KEY (`parent_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `users` ADD CONSTRAINT `users_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `users` ADD CONSTRAINT `users_packageId_fkey` FOREIGN KEY (`packageId`) REFERENCES `packages`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `users` ADD CONSTRAINT `users_package_id_fkey` FOREIGN KEY (`package_id`) REFERENCES `packages`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `api_keys` ADD CONSTRAINT `api_keys_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -685,6 +673,12 @@ ALTER TABLE `user_kyc` ADD CONSTRAINT `user_kyc_address_id_fkey` FOREIGN KEY (`a
 ALTER TABLE `user_kyc` ADD CONSTRAINT `user_kyc_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `business_verifications` ADD CONSTRAINT `business_verifications_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `business_verifications` ADD CONSTRAINT `business_verifications_address_id_fkey` FOREIGN KEY (`address_id`) REFERENCES `addresses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `bank_details` ADD CONSTRAINT `bank_details_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -692,9 +686,6 @@ ALTER TABLE `wallets` ADD CONSTRAINT `wallets_user_id_fkey` FOREIGN KEY (`user_i
 
 -- AddForeignKey
 ALTER TABLE `user_limits` ADD CONSTRAINT `user_limits_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `commission_settings` ADD CONSTRAINT `commission_settings_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `commission_settings` ADD CONSTRAINT `commission_settings_target_user_id_fkey` FOREIGN KEY (`target_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -733,10 +724,7 @@ ALTER TABLE `service_provider_mappings` ADD CONSTRAINT `service_provider_mapping
 ALTER TABLE `service_provider_mappings` ADD CONSTRAINT `service_provider_mappings_provider_id_fkey` FOREIGN KEY (`provider_id`) REFERENCES `providers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `provider_slabs` ADD CONSTRAINT `provider_slabs_service_provider_mapping_id_fkey` FOREIGN KEY (`service_provider_mapping_id`) REFERENCES `service_provider_mappings`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `payment_method_charge_provider` ADD CONSTRAINT `payment_method_charge_provider_service_provider_mapping_id_fkey` FOREIGN KEY (`service_provider_mapping_id`) REFERENCES `service_provider_mappings`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `provider_charge_rules` ADD CONSTRAINT `provider_charge_rules_service_provider_mapping_id_fkey` FOREIGN KEY (`service_provider_mapping_id`) REFERENCES `service_provider_mappings`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_permissions` ADD CONSTRAINT `user_permissions_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -773,9 +761,3 @@ ALTER TABLE `ledger_entries` ADD CONSTRAINT `ledger_entries_serviceProviderMappi
 
 -- AddForeignKey
 ALTER TABLE `ledger_entries` ADD CONSTRAINT `ledger_entries_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `pii_consents` ADD CONSTRAINT `pii_consents_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `pii_consents` ADD CONSTRAINT `pii_consents_user_kyc_id_fkey` FOREIGN KEY (`user_kyc_id`) REFERENCES `user_kyc`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

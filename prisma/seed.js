@@ -60,9 +60,9 @@ async function main() {
 
         walletType,
 
-        balance: BigInt(0),
+        balance: 0,
 
-        holdBalance: BigInt(0),
+        holdBalance: 0,
       },
     });
   }
