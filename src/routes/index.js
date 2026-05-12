@@ -7,6 +7,7 @@ import providerRoute from "./provider.route.js";
 import serviceProviderRoute from "./service-provider.route.js";
 import commissionSettingRoute from "./commission-setting.route.js";
 import userLimitRoute from "./user-limit.route.js";
+import apiKeyRoute from "./api-key.route.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/providers", providerRoute);
 router.use("/service-provider", serviceProviderRoute);
 router.use("/commission-settings", commissionSettingRoute);
 router.use("/user-limit", userLimitRoute);
+router.use("/api-key", apiKeyRoute);
 
 export default router;

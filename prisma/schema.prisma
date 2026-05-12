@@ -106,9 +106,6 @@ model User {
   loginEvents               LoginEvent[]
   ledgerEntries             LedgerEntry[]
   apiKeys                   ApiKey[]
-  apiAccessTokens           ApiAccessToken[]
-  apiRequestLogs            ApiRequestLog[]
-  rateLimits                RateLimit[]
   businessKyc               BusinessKyc?
 
   @@index([parentId])
@@ -121,160 +118,33 @@ model User {
 
 // API KEY
 model ApiKey {
-  id String @id @default(uuid())
-
-  userId String @map("user_id")
-
-  name String
-
-  apiKey String @unique @map("api_key")
-
-  secretKey String @map("secret_key")
-
-  provider String
-
-  allowedIps Json? @map("allowed_ips")
-
-  callbackUrl String? @map("callback_url")
-
-  webhookSecret String? @map("webhook_secret")
-
-  isActive Boolean @default(true) @map("is_active")
-
-  expiresAt DateTime? @map("expires_at")
-
-  lastUsedAt DateTime? @map("last_used_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  name              String?
+  apiKey            String    @unique @map("api_key")
+  secretKey         String    @map("secret_key")
+  provider          String?
+  allowedIps        Json?     @map("allowed_ips")
+  maxIpLimit        Int       @default(5) @map("max_ip_limit")
+  callbackUrl       String?   @map("callback_url")
+  callbackSecret    String?   @map("callback_secret")
+  requestsPerMinute Int       @default(60) @map("requests_per_minute")
+  requestsPerDay    Int       @default(10000) @map("requests_per_day")
+  isActive          Boolean   @default(true) @map("is_active")
+  expiresAt         DateTime? @map("expires_at")
+  lastUsedAt        DateTime? @map("last_used_at")
+  lastUsedIp        String?   @map("last_used_ip")
+  remarks           String?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id])
-
-  accessTokens ApiAccessToken[]
-
-  requestLogs ApiRequestLog[]
-  rateLimits  RateLimit[]
 
   @@index([userId])
   @@index([apiKey])
+  @@index([isActive])
+  @@index([expiresAt])
   @@map("api_keys")
-}
-
-// API ACCESS TOKEN
-model ApiAccessToken {
-  id String @id @default(uuid())
-
-  userId String @map("user_id")
-
-  apiKeyId String? @map("api_key_id")
-
-  accessToken String @unique @map("access_token")
-
-  refreshToken String? @unique @map("refresh_token")
-
-  ipAddress String? @map("ip_address")
-
-  userAgent String? @map("user_agent")
-
-  deviceId String? @map("device_id")
-
-  isRevoked Boolean @default(false) @map("is_revoked")
-
-  expiresAt DateTime @map("expires_at")
-
-  refreshExpiresAt DateTime? @map("refresh_expires_at")
-
-  lastUsedAt DateTime? @map("last_used_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id])
-
-  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
-
-  @@index([userId])
-  @@index([apiKeyId])
-  @@index([accessToken])
-  @@map("api_access_tokens")
-}
-
-// API REQUEST LOGS
-model ApiRequestLog {
-  id String @id @default(uuid())
-
-  userId String? @map("user_id")
-
-  apiKeyId String? @map("api_key_id")
-
-  transactionId String? @map("transaction_id")
-
-  endpoint String
-
-  method String
-
-  ipAddress String? @map("ip_address")
-
-  requestHeaders Json? @map("request_headers")
-
-  requestBody Json? @map("request_body")
-
-  responseBody Json? @map("response_body")
-
-  statusCode Int? @map("status_code")
-
-  responseTime Int? @map("response_time")
-
-  errorMessage String? @map("error_message")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User? @relation(fields: [userId], references: [id])
-
-  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
-
-  transaction Transaction? @relation(fields: [transactionId], references: [id])
-
-  @@index([userId])
-  @@index([apiKeyId])
-  @@index([transactionId])
-  @@index([endpoint])
-  @@index([createdAt])
-  @@map("api_request_logs")
-}
-
-// RATE LIMIT
-model RateLimit {
-  id String @id @default(uuid())
-
-  userId String? @map("user_id")
-
-  apiKeyId String? @map("api_key_id")
-
-  endpoint String
-
-  requests Int @default(0)
-
-  limitCount Int @default(100)
-
-  windowSeconds Int @default(60)
-
-  resetAt DateTime @map("reset_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User? @relation(fields: [userId], references: [id])
-
-  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
-
-  @@index([userId])
-  @@index([apiKeyId])
-  @@index([endpoint])
-  @@map("rate_limits")
 }
 
 model UserKyc {
@@ -719,7 +589,6 @@ model Transaction {
   user   User   @relation(fields: [userId], references: [id])
   wallet Wallet @relation(fields: [walletId], references: [id])
 
-  apiRequestLogs    ApiRequestLog[]
   serviceProvider   ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
   serviceProviderId String?
 
