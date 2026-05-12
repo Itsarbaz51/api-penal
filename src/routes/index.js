@@ -10,6 +10,7 @@ import userLimitRoute from "./user-limit.route.js";
 import apiKeyRoute from "./api-key.route.js";
 import permissionRoute from "./permission.route.js";
 import kycRoute from "./kyc.route.js";
+import bankDetailsRoute from "./bank-detail.route.js";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/user-limit", userLimitRoute);
 router.use("/api-key", apiKeyRoute);
 router.use("/permission", permissionRoute);
 router.use("/kyc", kycRoute);
+router.use("/bank", bankDetailsRoute);
 
 export default router;
