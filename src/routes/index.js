@@ -11,6 +11,8 @@ import apiKeyRoute from "./api-key.route.js";
 import permissionRoute from "./permission.route.js";
 import kycRoute from "./kyc.route.js";
 import bankDetailsRoute from "./bank-detail.route.js";
+import auditLogRoute from "./audit-log.route.js";
+import loginLogRoute from "./login-event.route.js";
 
 const router = Router();
 
@@ -26,5 +28,7 @@ router.use("/api-key", apiKeyRoute);
 router.use("/permission", permissionRoute);
 router.use("/kyc", kycRoute);
 router.use("/bank", bankDetailsRoute);
+router.use("/audit-logs", auditLogRoute);
+router.use("/login-logs", loginLogRoute);
 
 export default router;
