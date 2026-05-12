@@ -96,17 +96,17 @@ model User {
   commissionSetting         CommissionSetting[]
   systemSettings            SystemSetting[]
   transactions              Transaction[]
-  userKyc                   UserKyc[]
-  parent                    User?               @relation("UserHierarchy", fields: [parentId], references: [id])
-  children                  User[]              @relation("UserHierarchy")
-  package                   Package?            @relation(fields: [packageId], references: [id])
-  wallets                   Wallet[]
-  limits                    UserLimit?
-  loginEvents               LoginEvent[]
-  ledgerEntries             LedgerEntry[]
-  apiKeys                   ApiKey[]
-  businessKyc               BusinessKyc?
-  permissions               Permission[]
+
+  parent        User?         @relation("UserHierarchy", fields: [parentId], references: [id])
+  children      User[]        @relation("UserHierarchy")
+  package       Package?      @relation(fields: [packageId], references: [id])
+  wallets       Wallet[]
+  limits        UserLimit?
+  loginEvents   LoginEvent[]
+  ledgerEntries LedgerEntry[]
+  apiKeys       ApiKey[]
+  permissions   Permission[]
+  kyc           Kyc?
 
   @@index([parentId])
   @@index([phoneNumber])
@@ -147,50 +147,53 @@ model ApiKey {
   @@map("api_keys")
 }
 
-model UserKyc {
-  id                 String    @id @default(uuid())
-  registrationNumber String    @unique @map("registration_number")
-  userId             String    @map("user_id")
-  fullName           String    @map("full_name")
-  dob                DateTime
-  gender             Gender
-  status             KycStatus @default(PENDING)
-  type               KycTypes  @default(USER_KYC)
-  kycType            String    @default("MANUAL")
-  kycRejectionReason String?   @map("kyc_rejection_reason") @db.LongText
-  addressId          String    @map("address_id")
-  panFile            String    @map("pan_file")
-  aadhaarFile        String    @map("aadhaar_file")
-  addressProofFile   String    @map("address_proof_file")
-  photo              String
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
-  address            Address   @relation(fields: [addressId], references: [id])
-  user               User      @relation(fields: [userId], references: [id])
+model Kyc {
+  id                 String        @id @default(uuid())
+  registrationNumber String        @unique @map("registration_number")
+  userId             String        @unique @map("user_id")
+  fullName           String        @map("full_name")
+  dob                DateTime?
+  gender             Gender?
+  email              String?
+  phoneNumber        String?       @map("phone_number")
+  companyName        String?       @map("company_name")
+  businessType       String?       @map("business_type")
+  status             KycStatus     @default(PENDING)
+  kycType            String        @default("MANUAL") @map("kyc_type")
+  rejectionReason    String?       @map("rejection_reason") @db.LongText
+  verifiedAt         DateTime?     @map("verified_at")
+  verifiedBy         String?       @map("verified_by")
+  remarks            String?
+  metadata           Json?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at")
+  user               User          @relation(fields: [userId], references: [id])
+  addresses          Address[]
+  documents          KycDocument[]
 
-  @@index([addressId], map: "user_kyc_address_id_fkey")
-  @@index([userId], map: "user_kyc_user_id_fkey")
-  @@map("user_kyc")
+  @@index([status])
+  @@index([companyName])
+  @@map("kycs")
 }
 
-model BusinessKyc {
-  id                 String    @id @default(uuid())
-  registrationNumber String    @unique @map("registration_number")
-  userId             String    @unique @map("user_id")
-  companyName        String    @map("company_name")
-  type               String    @map("type") // Proprietorship, Partnership, Pvt Ltd, LLP, etc.
-  kycRejectionReason String?   @map("kyc_rejection_reason") @db.LongText
-  documentFile       String    @map("document_file")
-  addressId          String    @map("address_id")
-  status             KycStatus @default(PENDING)
-  rejectionReason    String?   @map("rejection_reason")
-  verifiedAt         DateTime? @map("verified_at")
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  user               User      @relation(fields: [userId], references: [id])
-  address            Address   @relation(fields: [addressId], references: [id])
+model KycDocument {
+  id             String    @id @default(uuid())
+  kycId          String    @map("kyc_id")
+  type           String
+  fileUrl        String    @map("file_url")
+  documentNumber String?   @map("document_number")
+  remarks        String?
+  isVerified     Boolean   @default(false) @map("is_verified")
+  verifiedAt     DateTime? @map("verified_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  @@map("business_verifications")
+  kyc Kyc @relation(fields: [kycId], references: [id])
+
+  @@index([kycId])
+  @@index([type])
+  @@index([isVerified])
+  @@map("kyc_documents")
 }
 
 model BankDetail {
@@ -233,20 +236,27 @@ model Beneficiary {
   @@map("beneficiarys")
 }
 
+enum AddressType {
+  HOME
+  BUSINESS
+}
+
 model Address {
-  id        String   @id @default(uuid())
-  kycId     String   @map("kyc_id")
-  type      String   @default("HOME")
-  address   String   @db.LongText
-  pinCode   String   @map("pin_code")
-  state     String   @map("state")
-  city      String   @map("city")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String      @id @default(uuid())
+  kycId     String      @map("kyc_id")
+  type      AddressType @default(HOME)
+  address   String      @db.LongText
+  pinCode   String      @map("pin_code")
+  state     String
+  city      String
+  landmark  String?
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
 
-  userKyc      UserKyc[]
-  businessKycs BusinessKyc[]
+  kyc Kyc @relation(fields: [kycId], references: [id])
 
+  @@index([kycId])
+  @@index([type])
   @@map("addresses")
 }
 

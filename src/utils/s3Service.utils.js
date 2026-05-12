@@ -8,7 +8,6 @@ import path from "node:path";
 import mime from "mime-types";
 import { envConfig } from "../config/env.config.js";
 
-
 const s3 = new S3Client({
   region: envConfig.S3_REGION,
   credentials: {
@@ -26,7 +25,7 @@ class S3Service {
   constructor() {
     this.bucket = envConfig.S3_BUCKET_NAME;
   }
-  
+
   async upload(localFilePath, category) {
     try {
       if (!localFilePath) {

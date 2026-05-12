@@ -9,6 +9,7 @@ import commissionSettingRoute from "./commission-setting.route.js";
 import userLimitRoute from "./user-limit.route.js";
 import apiKeyRoute from "./api-key.route.js";
 import permissionRoute from "./permission.route.js";
+import kycRoute from "./kyc.route.js";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/commission-settings", commissionSettingRoute);
 router.use("/user-limit", userLimitRoute);
 router.use("/api-key", apiKeyRoute);
 router.use("/permission", permissionRoute);
+router.use("/kyc", kycRoute);
 
 export default router;
