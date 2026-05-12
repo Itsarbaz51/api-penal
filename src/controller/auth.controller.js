@@ -4,7 +4,7 @@ import { cookieOptions } from "../utils/jwt.js";
 
 class AuthController {
   static async login(req, res) {
-    const result = await AuthServices.login(req.body);
+    const result = await AuthServices.login(req.body, req);
 
     const { user, accessToken, refreshToken } = result;
 

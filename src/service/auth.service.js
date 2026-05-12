@@ -7,7 +7,7 @@ import { emailQueue } from "../queues/email.queue.js";
 import crypto from "node:crypto";
 
 class AuthServices {
-  static async login(payload) {
+  static async login(payload, req) {
     const { identify, password, latitude, longitude, accuracy } = payload;
 
     const user = await prisma.user.findFirst({
@@ -38,6 +38,46 @@ class AuthServices {
 
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
+
+    const ipAddress =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket.remoteAddress ||
+      null;
+    const domainName = req.hostname || null;
+    const userAgent = req.headers["user-agent"] || null;
+    let location = null;
+
+    if (latitude && longitude) {
+      location = `${latitude},${longitude}`;
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: {
+          id: user.id,
+        },
+
+        data: {
+          refreshToken,
+          lastLoginAt: new Date(),
+        },
+      }),
+
+      prisma.loginEvent.create({
+        data: {
+          userId: user.id,
+          roleType: user.role,
+          message: "User login successful",
+          domainName,
+          ipAddress,
+          latitude,
+          longitude,
+          accuracy,
+          location,
+          userAgent,
+        },
+      }),
+    ]);
 
     await prisma.user.update({
       where: { id: user?.id },
