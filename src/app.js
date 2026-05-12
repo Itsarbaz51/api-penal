@@ -4,6 +4,7 @@ import { responseHandler } from "./middleware/response.middleware.js";
 import router from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import cookieParser from "cookie-parser";
+import { auditMiddleware } from "./middleware/auditLog.middleware.js";
 
 const app = express();
 
@@ -15,8 +16,8 @@ app.use(cookieParser());
 
 app.use(responseHandler);
 
+app.use(auditMiddleware);
 app.use("/api", router);
-
 app.get("/health", (req, res) => {
   res.json({ status: "health is ok" });
 });

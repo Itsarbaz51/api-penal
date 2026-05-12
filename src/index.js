@@ -5,13 +5,10 @@ dotenv.config({ path: "./.env" });
 import app from "./app.js";
 import { envConfig } from "./config/env.config.js";
 import prisma from "./db/db.js";
-import { setupAuditMiddleware } from "./middleware/auditLog.middleware.js";
-
-const db = setupAuditMiddleware();
 
 (async function main() {
   try {
-    await db.$connect();
+    await prisma.$connect();
 
     console.log("✅ Database connected");
 

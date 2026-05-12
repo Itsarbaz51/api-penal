@@ -12,9 +12,7 @@ model LoginEvent {
 
   userId   String  @map("user_id")
   roleType String? @map("role_type")
-
-  message String?
-  level   String?
+  message  String?
 
   domainName String? @map("domain_name")
   ipAddress  String? @map("ip_address")
@@ -36,17 +34,52 @@ model LoginEvent {
 }
 
 model AuditLog {
-  id         String  @id @default(uuid())
-  userId     String? @map("user_id")
-  action     String
+  id       String  @id @default(uuid())
+  userId   String? @map("user_id")
+  roleType String? @map("role_type")
+
+  // ACTION
+  action String
+  // CREATE_USER
+  // UPDATE_KYC
+  // DELETE_API_KEY
+
+  module String?
+  // USER
+  // KYC
+  // WALLET
+  // TRANSACTION
+
+  // LOCATION
+  latitude  Float?
+  longitude Float?
+  location  String?
+
   entityType String? @map("entity_type")
   entityId   String? @map("entity_id")
+  requestId  String? @map("request_id")
+  method     String? // POST / PATCH / DELETE
+  endpoint   String?
   ipAddress  String? @map("ip_address")
-  metadata   Json?
+  domainName String? @map("domain_name")
+  userAgent  String? @map("user_agent")
+  status     String? // SUCCESS / FAILED
+  message    String?
+
+  oldValues Json? @map("old_values")
+  newValues Json? @map("new_values")
+  metadata  Json?
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  user User? @relation(fields: [userId], references: [id])
+
   @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -107,6 +140,7 @@ model User {
   apiKeys       ApiKey[]
   permissions   Permission[]
   kyc           Kyc?
+  auditLogs     AuditLog[]
 
   @@index([parentId])
   @@index([phoneNumber])
