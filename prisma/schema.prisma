@@ -55,10 +55,10 @@ model Package {
   name               String              @unique
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
-  packagePermissions PackagePermission[]
   users              User[]
   commissionSettings CommissionSetting[]
   userLimits         UserLimit[]
+  permissions        Permission[]
 
   @@map("packages")
 }
@@ -97,7 +97,6 @@ model User {
   systemSettings            SystemSetting[]
   transactions              Transaction[]
   userKyc                   UserKyc[]
-  userPermissions           UserPermission[]
   parent                    User?               @relation("UserHierarchy", fields: [parentId], references: [id])
   children                  User[]              @relation("UserHierarchy")
   package                   Package?            @relation(fields: [packageId], references: [id])
@@ -107,6 +106,7 @@ model User {
   ledgerEntries             LedgerEntry[]
   apiKeys                   ApiKey[]
   businessKyc               BusinessKyc?
+  permissions               Permission[]
 
   @@index([parentId])
   @@index([phoneNumber])
@@ -403,9 +403,8 @@ model Service {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  UserPermission    UserPermission[]
-  PackagePermission PackagePermission[]
-  serviceProviders  ServiceProvider[]
+  serviceProviders ServiceProvider[]
+  permissions      Permission[]
 
   @@map("services")
 }
@@ -498,39 +497,30 @@ model ServiceProvider {
   @@map("service_providers")
 }
 
-model UserPermission {
-  id               String   @id @default(uuid())
-  serviceId        String   @map("service_id")
-  userId           String   @map("user_id")
-  canView          Boolean  @default(false) @map("can_view")
-  canEdit          Boolean  @default(false) @map("can_edit")
-  canSetCommission Boolean  @default(false) @map("can_set_commission")
-  canProcess       Boolean  @default(false) @map("can_process")
-  limits           Json?
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
-  user             User     @relation(fields: [userId], references: [id])
-  service          Service? @relation(fields: [serviceId], references: [id])
+model Permission {
+  id         String          @id @default(uuid())
+  scope      PermissionScope
+  userId     String?         @map("user_id")
+  packageId  String?         @map("package_id")
+  serviceId  String          @map("service_id")
+  canView    Boolean         @default(false) @map("can_view")
+  canProcess Boolean         @default(false) @map("can_process")
+  isActive   Boolean         @default(true) @map("is_active")
+  remarks    String?
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  user    User?    @relation(fields: [userId], references: [id])
+  package Package? @relation(fields: [packageId], references: [id])
+  service Service  @relation(fields: [serviceId], references: [id])
 
   @@unique([userId, serviceId])
-  @@index([serviceId], map: "user_permissions_service_id_fkey")
-  @@map("user_permissions")
-}
-
-model PackagePermission {
-  id         String   @id @default(uuid())
-  packageId  String   @map("package_id")
-  serviceId  String   @map("service_id")
-  canView    Boolean  @default(false) @map("can_view")
-  canProcess Boolean  @default(false) @map("can_process")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
-  package    Package  @relation(fields: [packageId], references: [id])
-  service    Service? @relation(fields: [serviceId], references: [id])
-
   @@unique([packageId, serviceId])
-  @@index([serviceId], map: "package_permissions_service_id_fkey")
-  @@map("package_permissions")
+  @@index([userId])
+  @@index([packageId])
+  @@index([serviceId])
+  @@index([scope])
+  @@map("permissions")
 }
 
 model SystemSetting {
@@ -698,6 +688,11 @@ enum UserStatus {
   ACTIVE
   IN_ACTIVE
   DELETE
+}
+
+enum PermissionScope {
+  USER
+  PACKAGE
 }
 
 enum PricingMode {
