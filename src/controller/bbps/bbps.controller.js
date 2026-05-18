@@ -1,16 +1,30 @@
-import BbpsService from "../../service/bbps/bbps.service";
+import BbpsService from "../../service/bbps/bbps.service.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 
 class BbpsController {
-  static async execute(req, res) {
-    const response = await BbpsService.execute({
-      providerCode: req.body.provider,
-      method: req.body.method,
-      payload: req.body.payload,
-      providerConfig: {},
-    });
+  // CATEGORIES
+  static categories = async (req, res) => {
+    const result = await BbpsService.categories(req.body, req.user, req.apiKey);
 
-    return res.json(response);
-  }
+    return res.json(ApiResponse.success(result));
+  };
+
+  // BILLERS
+  static billers = async (req, res) => {
+    const result = await BbpsService.billers(req.body, req.user, req.apiKey);
+
+    return res.json(ApiResponse.success(result));
+  };
+
+  static billerDetails = async (req, res) => {
+    const result = await BbpsService.billerDetails(
+      req.body,
+      req.user,
+      req.apiKey
+    );
+
+    return res.json(ApiResponse.success(result));
+  };
 }
 
 export default BbpsController;

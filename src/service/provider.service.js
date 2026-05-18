@@ -80,7 +80,7 @@ export class ProviderService {
         skip,
         take: limit,
         include: {
-          mappings: {
+          serviceProviders: {
             include: {
               service: true,
             },

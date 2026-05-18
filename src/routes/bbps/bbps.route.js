@@ -1,15 +1,36 @@
 import { Router } from "express";
-import ValidateRequest from "../middleware/validateRequest.middleware.js";
-import BbpsController from "../controller/bbps.controller.js";
-import asyncHandler from "../utils/AsyncHandler.js";
+import BbpsController from "../../controller/bbps/bbps.controller.js";
+// import AuthMiddleware from "../../middleware/auth.middleware.js";
+import ApiKeyMiddleware from "../../middleware/apiKey.middleware.js";
+import asyncHandler from "../../utils/AsyncHandler.js";
+import ValidateRequest from "../../middleware/validateRequest.middleware.js";
 import BbpsValidation from "../../validation/bbps/bbps.validation.js";
 
 const route = Router();
 
+// BILLER LIST
+route.get(
+  "/categorys",
+  ApiKeyMiddleware.verify,
+  asyncHandler(BbpsController.categories)
+);
+
 route.post(
-  "/execute",
-  ValidateRequest.validate(BbpsValidation.execute),
-  asyncHandler(BbpsController.execute)
+  "/billers",
+  ApiKeyMiddleware.verify,
+  // ValidateRequest.validate({
+  //   body: BbpsValidation.billers,
+  // }),
+  asyncHandler(BbpsController.billers)
+);
+
+route.post(
+  "/biller-details",
+  ApiKeyMiddleware.verify,
+  ValidateRequest.validate({
+    body: BbpsValidation.billerDetails,
+  }),
+  asyncHandler(BbpsController.billerDetails)
 );
 
 export default route;

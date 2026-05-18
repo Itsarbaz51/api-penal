@@ -13,6 +13,8 @@ import kycRoute from "./kyc.route.js";
 import bankDetailsRoute from "./bank-detail.route.js";
 import auditLogRoute from "./audit-log.route.js";
 import loginLogRoute from "./login-event.route.js";
+import apiKeyProviderMappingsRoute from "./api-key-provider-mapping.route.js";
+import bbpsRoute from "./bbps/bbps.route.js";
 
 const router = Router();
 
@@ -30,5 +32,7 @@ router.use("/kyc", kycRoute);
 router.use("/bank", bankDetailsRoute);
 router.use("/audit-logs", auditLogRoute);
 router.use("/login-logs", loginLogRoute);
+router.use("/api-key-provider-mappings", apiKeyProviderMappingsRoute);
+router.use("/bbps", bbpsRoute);
 
 export default router;

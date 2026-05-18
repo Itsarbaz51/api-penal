@@ -3,7 +3,7 @@ import AuBbpsPlugin from "../../plugin/bbps/au.plugin.js";
 
 function getBbpsPlugin(providerCode, config) {
   switch (providerCode) {
-    case "AU":
+    case "AU_BANK":
       return new AuBbpsPlugin(config);
 
     default:

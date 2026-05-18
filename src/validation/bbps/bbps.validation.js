@@ -1,28 +1,16 @@
 import { z } from "zod";
 
-const execute = z.object({
-  body: z.object({
-    provider: z.enum(["AU", "BULKPE", "PAYSPRINT"]),
-    method: z.enum([
-      "getAllCirclesBiller",
-      "getCircleBiller",
-      "getBillerPlans",
-      "billerDetails",
-      "billerList",
-      "billFetch",
-      "billPayment",
-      "billValidation",
-      "transactionStatusMobile",
-      "transactionStatusRefID",
-      "raiseComplaint",
-      "checkComplaintStatus",
-    ]),
-    payload: z.record(z.any()),
-  }),
+const billers = z.object({
+  category: z.string(),
+});
+
+const billerDetails = z.object({
+  billerId: z.string().min(3, "billerId required"),
 });
 
 const BbpsValidation = {
-  execute,
+  billers,
+  billerDetails,
 };
 
 export default BbpsValidation;
