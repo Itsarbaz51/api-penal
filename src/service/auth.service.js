@@ -95,10 +95,6 @@ class AuthServices {
       where: {
         id: userId,
       },
-
-      include: {
-        role: true,
-      },
     });
 
     if (!user) {
