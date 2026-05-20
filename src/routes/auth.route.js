@@ -41,4 +41,5 @@ route.post(
 
 route.get("/", AuthMiddleware.isAuthenticated, asyncHandler(AuthController.me));
 
+route.post("/logout", AuthMiddleware.isAuthenticated, AuthController.logout);
 export default route;

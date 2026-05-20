@@ -296,6 +296,29 @@ class AuthServices {
 
     return true;
   }
+
+  static async logout(userId) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw ApiError.notFound("User not found");
+    }
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+
+    return true;
+  }
 }
 
 export default AuthServices;

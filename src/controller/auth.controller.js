@@ -67,6 +67,27 @@ class AuthController {
 
     return res.json(ApiResponse.success(user, "Current user fetched"));
   }
+
+  static async logout(req, res, next) {
+    try {
+      await AuthServices.logout(req.user.id);
+
+      return res
+        .clearCookie("accessToken", {
+          path: "/",
+          sameSite: "none",
+          secure: true,
+        })
+        .clearCookie("refreshToken", {
+          path: "/",
+          sameSite: "none",
+          secure: true,
+        })
+        .success("Logout successful");
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default AuthController;
