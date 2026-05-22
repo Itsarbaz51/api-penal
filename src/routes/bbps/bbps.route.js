@@ -33,4 +33,13 @@ route.post(
   asyncHandler(BbpsController.billerDetails)
 );
 
+route.post(
+  "/bill-fetch",
+  ApiKeyMiddleware.verify,
+  ValidateRequest.validate({
+    body: BbpsValidation.billFetch,
+  }),
+  asyncHandler(BbpsController.billFetch)
+);
+
 export default route;

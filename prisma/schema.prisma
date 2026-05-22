@@ -789,44 +789,51 @@ model BbpsCustomerParam {
 model BbpsFetchBill {
   id String @id @default(uuid())
 
-  userId String @map("user_id")
-
+  // OWNER
+  userId            String @map("user_id")
   serviceProviderId String @map("service_provider_id")
+  billerId          String @map("biller_id")
 
-  billerId String @map("biller_id")
-
-  reference String
-
-  fetchId String @unique @map("fetch_id")
-
+  // REFERENCES
+  clientReferenceId String  @map("client_reference_id")
+  reference         String  @unique
+  fetchId           String  @unique @map("fetch_id")
   providerReference String? @map("provider_reference")
 
-  customerParams Json? @map("customer_params")
-
+  // CUSTOMER INPUT
+  customerParams    Json?   @map("customer_params")
   customerParamsKey String? @map("customer_params_key")
 
-  amount Float?
+  // BILL DATA
+  amount       Float?
+  customerName String?   @map("customer_name")
+  dueDate      DateTime? @map("due_date")
+  expiresAt    DateTime? @map("expires_at")
 
-  status String @default("PENDING")
+  // PROVIDER STATUS
+  status                  String  @default("PENDING")
+  providerResponseCode    String? @map("provider_response_code")
+  providerResponseMessage String? @map("provider_response_message")
 
-  customerName String? @map("customer_name")
-
-  dueDate DateTime? @map("due_date")
-
+  // DEBUG / AUDIT
   rawResponse Json? @map("raw_response")
 
+  // TIMESTAMPS
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id])
-
-  biller BbpsBiller @relation(fields: [billerId], references: [id])
-
+  // RELATIONS
+  user            User            @relation(fields: [userId], references: [id])
+  biller          BbpsBiller      @relation(fields: [billerId], references: [id])
   serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
 
+  // INDEXES
   @@index([userId])
   @@index([billerId])
+  @@index([serviceProviderId])
+  @@index([clientReferenceId])
   @@index([fetchId])
+  @@index([status])
   @@map("bbps_fetch_bills")
 }
 

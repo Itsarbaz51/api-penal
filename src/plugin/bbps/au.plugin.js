@@ -74,9 +74,8 @@ class AuBbpsPlugin extends BbpsInterface {
   }
 
   // BILL
-
   async billFetch(payload) {
-    return this.request("/BillFetch", payload);
+    return this.request("/billFetch", payload);
   }
 
   async billPayment(payload) {

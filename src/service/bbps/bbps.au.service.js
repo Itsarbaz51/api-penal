@@ -2,6 +2,7 @@ import prisma from "../../db/db.js";
 import getBbpsPlugin from "../../plugin_registry/bbps/pluginRegistry.js";
 import { ApiError } from "../../utils/ApiError.js";
 import CryptoService from "../../utils/crypto.utils.js";
+import crypto from "node:crypto";
 
 export default class AuBbpsService {
   // BILLER LIST
@@ -603,6 +604,189 @@ export default class AuBbpsService {
       supportBillValidation: finalBiller.supportBillValidation,
       supportsAdhoc: finalBiller.supportsAdhoc,
       customerParams: finalBiller.bbpsCustomerParams,
+    };
+  }
+
+  static async billFetch(payload, actor, serviceProvider) {
+    const plugin = getBbpsPlugin(
+      serviceProvider.provider.code,
+      serviceProvider.config
+    );
+
+    const config = serviceProvider.config || {};
+
+    // BILLER
+    const biller = await prisma.bbpsBiller.findFirst({
+      where: {
+        providerId: serviceProvider.providerId,
+        billerId: payload.billerId,
+      },
+    });
+
+    if (!biller) {
+      throw ApiError.notFound("Biller not found");
+    }
+
+    const generate35 = () => {
+      let id = "";
+
+      while (id.length < 35) {
+        id += crypto.randomBytes(32).toString("hex");
+      }
+
+      return id.substring(0, 35);
+    };
+
+    const ts = new Date().toISOString().replace("Z", "+05:30");
+
+    const reference = generate35();
+    const msgId = generate35();
+
+    const requestPayload = {
+      head: {
+        ver: config.version || "1.0",
+        ts: ts,
+        origInst: config.origInst || "AU01",
+        refId: reference,
+      },
+
+      analytics: [
+        {
+          name: "FETCHREQUESTSTART",
+          value: ts,
+        },
+        {
+          name: "FETCHREQUESTEND",
+          value: ts,
+        },
+      ],
+
+      txn: {
+        riskScores: [
+          {
+            value: "030",
+            provider: config.origInst || "AU01",
+            type: "TXNRISK",
+          },
+          {
+            value: "030",
+            provider: "BBPS",
+            type: "TXNRISK",
+          },
+        ],
+
+        ts: ts,
+        msgId: msgId,
+      },
+
+      customer: {
+        mobile: payload.mobile || actor.phoneNumber,
+
+        tags: payload.email
+          ? [
+              {
+                name: "EMAIL",
+                value: payload.email,
+              },
+            ]
+          : [],
+      },
+
+      agent: {
+        device: [
+          {
+            name: "INITIATING_CHANNEL",
+            value: "BNKBRNCH",
+          },
+          {
+            name: "IFSC",
+            value: config.ifsc || "AUBL0002341",
+          },
+          {
+            name: "MOBILE",
+            value: payload.mobile || actor.phoneNumber,
+          },
+          {
+            name: "GEOCODE",
+            value: config.geoCode || "28.6139,78.5555",
+          },
+          {
+            name: "POSTAL_CODE",
+            value: config.postalCode || "600001",
+          },
+        ],
+
+        id: config.agentId || "AU01AU02BNK525314030",
+      },
+
+      billDetails: {
+        billerId: payload.billerId,
+
+        customerParams: payload.customerParams.map((p) => ({
+          name: p.name,
+          value: String(p.value),
+        })),
+      },
+    };
+
+    console.log(JSON.stringify(requestPayload, null, 2));
+
+    const response = await plugin.billFetch(requestPayload);
+    console.log(response);
+
+    if (response?.reason?.responseCode !== "000") {
+      throw ApiError.badRequest(
+        response?.reason?.responseReason == "Failure"
+          ? response?.reason?.complianceReason
+          : response?.reason?.responseReason || "Bill fetch failed"
+      );
+    }
+
+    // PARAM HASH
+    const customerParamsKey = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(payload.customerParams))
+      .digest("hex");
+
+    // SAVE FETCH
+    const fetch = await prisma.bbpsFetchBill.create({
+      data: {
+        userId: actor.id,
+        serviceProviderId: serviceProvider.id,
+        billerId: biller.id,
+        clientReferenceId: payload.clientReferenceId,
+        reference,
+        fetchId: response.txn?.msgId || msgId,
+        providerReference: response.reason?.approvalRefNum,
+        providerResponseCode: response.reason?.responseCode,
+        providerResponseMessage: response.reason?.responseReason,
+        customerParams:
+          response.billDetails?.customerParams || payload.customerParams,
+        customerParamsKey,
+        amount: Number(response.billerResponse?.amount || 0),
+
+        status: response?.reason?.responseReason,
+
+        customerName: response.billerResponse?.customerName,
+        dueDate: response.billerResponse?.dueDate
+          ? new Date(response.billerResponse.dueDate)
+          : null,
+
+        rawResponse: response,
+      },
+    });
+
+    // RETURN CLEAN
+    return {
+      clientReferenceId: fetch.clientReferenceId,
+      reference: fetch.reference,
+      fetchId: fetch.fetchId,
+      providerReference: fetch.providerReference,
+      customerName: fetch.customerName,
+      amount: fetch.amount,
+      dueDate: fetch.dueDate,
+      status: fetch.status,
+      additionalInfo: response.additionalInfoList || [],
     };
   }
 }

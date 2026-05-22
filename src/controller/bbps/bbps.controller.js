@@ -25,6 +25,12 @@ class BbpsController {
 
     return res.json(ApiResponse.success(result));
   };
+
+  static billFetch = async (req, res) => {
+    const result = await BbpsService.billFetch(req.body, req.user, req.apiKey);
+
+    return res.json(ApiResponse.success(result));
+  };
 }
 
 export default BbpsController;

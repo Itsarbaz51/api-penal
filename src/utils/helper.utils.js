@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { ApiError } from "./ApiError.js";
 
 class HelperUtils {
   static generateUniqueId(prefix = "TXN") {
