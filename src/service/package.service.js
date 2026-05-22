@@ -21,12 +21,49 @@ class PackageService {
     });
   }
 
-  static async getPackages() {
-    return await prisma.package.findMany({
-      orderBy: {
-        createdAt: "desc",
+  static async getPackages(query) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const search = query.search?.trim() || "";
+    const skip = (page - 1) * limit;
+
+    const where = {
+      ...(search && {
+        OR: [
+          {
+            name: {
+              contains: search,
+              lte: "insensitive",
+            },
+          },
+        ],
+      }),
+    };
+
+    const [packages, total] = await prisma.$transaction([
+      prisma.package.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+
+      prisma.package.count({
+        where,
+      }),
+    ]);
+
+    return {
+      data: packages,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+    };
   }
 
   static async updatePackage(id, payload) {

@@ -12,7 +12,7 @@ class PackageController {
   }
 
   static async getAll(req, res) {
-    const packages = await PackageService.getPackages();
+    const packages = await PackageService.getPackages(req.query);
 
     return res.json(
       ApiResponse.success(packages, "Packages fetched successfully")
