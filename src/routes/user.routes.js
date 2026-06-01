@@ -11,6 +11,7 @@ const route = Router();
 route.post(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ body: UserValidationSchemas.createUser }),
   asyncHandler(UserController.create)
 );
@@ -18,12 +19,14 @@ route.post(
 route.get(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   asyncHandler(UserController.getAll)
 );
 
 route.get(
   "/:id/credentials",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ params: UserValidationSchemas.userIdParam }),
   asyncHandler(UserController.credentials)
 );
@@ -31,6 +34,7 @@ route.get(
 route.get(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ params: UserValidationSchemas.userIdParam }),
   asyncHandler(UserController.getOne)
 );
@@ -38,6 +42,7 @@ route.get(
 route.patch(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   upload.single("profileImage"),
   ValidateRequest.validate({ params: UserValidationSchemas.userIdParam }),
   ValidateRequest.validate({ body: UserValidationSchemas.updateUser }),
@@ -47,6 +52,7 @@ route.patch(
 route.delete(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ params: UserValidationSchemas.userIdParam }),
   asyncHandler(UserController.delete)
 );

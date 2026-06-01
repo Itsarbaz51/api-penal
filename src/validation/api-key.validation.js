@@ -6,13 +6,26 @@ class ApiKeyValidationSchemas {
     return z.object({
       userId: z.uuid(),
       name: z.string().min(2).max(100).optional(),
-      allowedIps: z.array(z.ipv4()).optional(),
+      allowedIps: z
+        .array(
+          z
+            .string()
+            .trim()
+            .refine(
+              (ip) =>
+                /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/.test(
+                  ip
+                ),
+              {
+                message: "Invalid IPv4 address",
+              }
+            )
+        )
+        .max(100)
+        .optional(),
       maxIpLimit: z.number().min(1).max(100).optional(),
       callbackUrl: z.url().optional(),
-      requestsPerMinute: z.number().min(1).optional(),
-      requestsPerDay: z.number().min(1).optional(),
       isActive: z.boolean().optional(),
-      expiresAt: z.coerce.date().optional(),
       remarks: z.string().optional(),
     });
   }
@@ -21,7 +34,23 @@ class ApiKeyValidationSchemas {
   static get updateApiKey() {
     return z.object({
       // USER EDITABLE
-      allowedIps: z.array(z.ipv4()).optional(),
+      allowedIps: z
+        .array(
+          z
+            .string()
+            .trim()
+            .refine(
+              (ip) =>
+                /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/.test(
+                  ip
+                ),
+              {
+                message: "Invalid IPv4 address",
+              }
+            )
+        )
+        .max(100)
+        .optional(),
       callbackUrl: z.url().optional(),
 
       // SUPER ADMIN ONLY

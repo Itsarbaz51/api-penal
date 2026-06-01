@@ -10,6 +10,7 @@ const route = Router();
 route.post(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ body: PackageValidationSchemas.createPackage }),
   asyncHandler(PackageController.create)
 );
@@ -17,12 +18,14 @@ route.post(
 route.get(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   asyncHandler(PackageController.getAll)
 );
 
 route.patch(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ params: PackageValidationSchemas.packageIdParam }),
   ValidateRequest.validate({ body: PackageValidationSchemas.updatePackage }),
   asyncHandler(PackageController.update)
@@ -31,6 +34,7 @@ route.patch(
 route.delete(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({ params: PackageValidationSchemas.packageIdParam }),
   asyncHandler(PackageController.delete)
 );

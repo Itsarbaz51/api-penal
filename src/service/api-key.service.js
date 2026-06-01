@@ -213,6 +213,7 @@ class ApiKeyService {
 
     return {
       // PLAIN
+      ...apiKeyData,
       apiKey: apiKeyData.apiKey,
 
       // ENCRYPTED
