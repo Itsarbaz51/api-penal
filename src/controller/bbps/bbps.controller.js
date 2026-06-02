@@ -31,6 +31,12 @@ class BbpsController {
 
     return res.json(ApiResponse.success(result));
   };
+
+  static billPay = async (req, res) => {
+    const result = await BbpsService.billPay(req.body, req.user, req.apiKey);
+
+    return res.json(ApiResponse.success(result));
+  };
 }
 
 export default BbpsController;

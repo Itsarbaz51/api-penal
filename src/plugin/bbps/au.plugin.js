@@ -64,8 +64,6 @@ class AuBbpsPlugin extends BbpsInterface {
   }
 
   async billerDetails(payload) {
-    console.log(payload);
-    
     return this.request("/getBillerDetails", payload);
   }
 
@@ -79,7 +77,7 @@ class AuBbpsPlugin extends BbpsInterface {
   }
 
   async billPayment(payload) {
-    return this.request("/BillPayment", payload);
+    return this.request("/billPay", payload);
   }
 
   async billValidation(payload) {

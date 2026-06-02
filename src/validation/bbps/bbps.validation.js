@@ -32,10 +32,21 @@ const billFetch = z.object({
   email: z.string().email().optional(),
 });
 
+const billPay = z.object({
+  clientReferenceId: z.string().min(12),
+  fetchId: z.string().min(3),
+  amount: z.union([z.string(), z.number()]),
+  mobile: z
+    .string()
+    .regex(/^[6-9]\d{9}$/)
+    .optional(),
+});
+
 const BbpsValidation = {
   billers,
   billerDetails,
   billFetch,
+  billPay,
 };
 
 export default BbpsValidation;

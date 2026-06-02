@@ -59,4 +59,15 @@ export default class BbpsService {
 
     return Service.billFetch(payload, actor, serviceProvider);
   }
+
+  static async billPay(payload, actor, apiKey) {
+    const serviceProvider = await ProviderRoutingResolver.resolve({
+      apiKeyId: apiKey.id,
+      serviceCode: "BBPS",
+    });
+
+    const Service = this.getService(serviceProvider.provider.code);
+
+    return Service.billPay(payload, actor, serviceProvider);
+  }
 }

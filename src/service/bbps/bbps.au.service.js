@@ -789,4 +789,183 @@ export default class AuBbpsService {
       additionalInfo: response.additionalInfoList || [],
     };
   }
+
+  static async billPay(payload, actor, serviceProvider) {
+    const plugin = getBbpsPlugin(
+      serviceProvider.provider.code,
+      serviceProvider.config
+    );
+
+    const config = serviceProvider.config || {};
+
+    // FETCH CHECK
+    const fetch = await prisma.bbpsFetchBill.findUnique({
+      where: {
+        fetchId: payload.fetchId,
+      },
+
+      include: {
+        biller: true,
+      },
+    });
+
+    if (!fetch) {
+      throw ApiError.notFound("Fetch bill not found");
+    }
+
+    const generate35 = () => {
+      let id = "";
+
+      while (id.length < 35) {
+        id += crypto.randomBytes(32).toString("hex");
+      }
+
+      return id.substring(0, 35);
+    };
+
+    // JULIAN TXN REF
+    const generateJulianTxnRef = (prefix = "AU01") => {
+      const now = new Date();
+
+      // YEAR LAST 1 DIGITS
+      const year = now.getFullYear().toString().slice(-1);
+
+      // DAY OF YEAR (JULIAN)
+      const start = new Date(now.getFullYear(), 0, 0);
+
+      const diff =
+        now -
+        start +
+        (start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000;
+
+      const day = Math.floor(diff / (1000 * 60 * 60 * 24))
+        .toString()
+        .padStart(3, "0");
+
+      // RANDOM 12 DIGITS
+      const random = Math.floor(100000000000 + Math.random() * 900000000000);
+
+      // FINAL
+      return `${prefix}${year}${day}${random}`;
+    };
+
+    const ts = new Date().toISOString().replace("Z", "+05:30");
+
+    const refId = generate35();
+
+    const msgId = generate35();
+
+    const julianTxnRef = generateJulianTxnRef("AU01");
+
+    const requestPayload = {
+      Head: {
+        Ver: "1.0",
+        OrigInst: config.origInst || "AU01",
+        RefId: refId,
+        ts,
+      },
+
+      Txn: {
+        MsgId: msgId,
+        TxnReferenceId: julianTxnRef,
+        ts,
+        Type: "FORWARD TYPE REQUEST",
+
+        RiskScores: [
+          {
+            Type: "TXNRISK",
+            Value: "030",
+            Provider: config.origInst || "AU01",
+          },
+          {
+            Type: "TXNRISK",
+            Value: "030",
+            Provider: "BBPS",
+          },
+        ],
+      },
+
+      Analytics: [
+        {
+          Name: "PAYREQUESTSTART",
+          Value: ts,
+        },
+        {
+          Name: "PAYREQUESTEND",
+          Value: ts,
+        },
+      ],
+
+      Customer: {
+        Mobile: payload.mobile || actor.phoneNumber,
+      },
+
+      Agent: {
+        Device: [
+          {
+            Value: "INTB",
+            Name: "INITIATING_CHANNEL",
+          },
+          {
+            Value: "::1",
+            Name: "IP",
+          },
+          {
+            Value: "BC-BE-33-65-E6-AC",
+            Name: "MAC",
+          },
+        ],
+
+        Id: config.agentId || "AU01AU03AGT525314031",
+      },
+
+      BillDetails: {
+        CustomerParams: fetch.customerParams,
+
+        BillerId: fetch.biller.billerId,
+      },
+
+      Amount: {
+        Amount: String(payload.amount),
+        CustConvFee: "0",
+        CouCustConvFee: "0",
+        Currency: "356",
+      },
+
+      PaymentMethod: {
+        QuickPay: "No",
+        PaymentMode: config.paymentMode || "Internet Banking",
+        SplitPay: "No",
+        OffusPay: "Yes",
+      },
+
+      paymentInformation: [
+        {
+          Name: config.paymentInformation.name,
+          Value: config.paymentInformation.value,
+        },
+      ],
+
+      debitAccountNo: config.debitAccountNo,
+    };
+
+    const response = await plugin.billPayment(requestPayload);
+    console.log(response);
+    
+
+    if (response?.reason?.responseCode !== "000") {
+      throw ApiError.badRequest(
+        response?.reason?.complianceReason ||
+          response?.reason?.responseReason ||
+          "Bill payment failed"
+      );
+    }
+
+    return {
+      txnReferenceId: response.txn?.txnReferenceId,
+      providerReference: response.reason?.approvalRefNum,
+      status: response.reason?.responseReason,
+      response,
+    };
+  }
 }
