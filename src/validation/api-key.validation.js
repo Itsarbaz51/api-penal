@@ -51,7 +51,7 @@ class ApiKeyValidationSchemas {
         )
         .max(100)
         .optional(),
-      callbackUrl: z.url().optional(),
+      callbackUrl: z.string().optional(),
 
       // SUPER ADMIN ONLY
       name: z.string().min(2).max(100).optional(),
