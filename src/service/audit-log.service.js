@@ -14,7 +14,7 @@ class AuditLogService {
       search,
     } = payload;
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     // ROLE BASED FILTER
     let finalUserId;
@@ -50,32 +50,24 @@ class AuditLogService {
           {
             action: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
 
           {
             module: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
 
           {
             endpoint: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
 
           {
             ipAddress: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
         ],
@@ -88,7 +80,7 @@ class AuditLogService {
 
         skip,
 
-        take: limit,
+        take: Number(limit),
 
         include: {
           user: {
@@ -118,7 +110,7 @@ class AuditLogService {
 
       page,
 
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / Number(limit)),
     };
   }
 }
