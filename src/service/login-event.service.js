@@ -1,21 +1,19 @@
 import prisma from "../db/db.js";
 
 class LoginEventService {
-  // GET ALL
   static async getAll(payload, actor) {
-    const { page = 1, limit = 10, userId, roleType, search } = payload;
+    const page = parseInt(payload.page || 1, 10);
+    const limit = parseInt(payload.limit || 10, 10);
+
+    const { userId, roleType, search } = payload;
 
     const skip = (page - 1) * limit;
 
-    // ROLE BASED FILTER
     let finalUserId;
 
-    // SUPER ADMIN
     if (actor.role === "SUPER_ADMIN") {
-      // OPTIONAL FILTER
       finalUserId = userId || undefined;
     } else {
-      // NORMAL USER
       finalUserId = actor.id;
     }
 
@@ -33,24 +31,16 @@ class LoginEventService {
           {
             ipAddress: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
-
           {
             domainName: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
-
           {
             location: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
         ],
@@ -60,11 +50,8 @@ class LoginEventService {
     const [data, total] = await Promise.all([
       prisma.loginEvent.findMany({
         where,
-
         skip,
-
         take: limit,
-
         include: {
           user: {
             select: {
@@ -75,7 +62,6 @@ class LoginEventService {
             },
           },
         },
-
         orderBy: {
           createdAt: "desc",
         },
@@ -88,11 +74,8 @@ class LoginEventService {
 
     return {
       data,
-
       total,
-
       page,
-
       totalPages: Math.ceil(total / limit),
     };
   }
