@@ -61,13 +61,11 @@ export class ProviderService {
           {
             name: {
               contains: search,
-              mode: "insensitive",
             },
           },
           {
             code: {
               contains: search,
-              mode: "insensitive",
             },
           },
         ],
