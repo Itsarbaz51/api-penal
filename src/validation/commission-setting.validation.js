@@ -34,7 +34,7 @@ class CommissionSettingValidationSchemas {
 
       // COMMISSION
       mode: z.enum(["NONE", "COMMISSION", "SURCHARGE"]).optional(),
-      type: z.enum(["NONE", "FIXED", "PERCENTAGE"]).optional(),
+      type: z.enum(["NONE", "FLAT", "PERCENTAGE"]).optional(),
       value: z.number(),
 
       // TAX
@@ -43,8 +43,6 @@ class CommissionSettingValidationSchemas {
       applyGST: z.boolean().optional(),
       gstPercent: z.number().optional(),
 
-      // EXTRA
-      config: z.any().optional(),
     });
   }
 

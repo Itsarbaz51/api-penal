@@ -380,9 +380,6 @@ model CommissionSetting {
   applyGST   Boolean @default(false) @map("apply_gst")
   gstPercent Float?  @map("gst_percent")
 
-  // EXTRA
-  config Json?
-
   // TIMESTAMPS
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -882,6 +879,7 @@ enum CommissionType {
 }
 
 enum CommissionScope {
+  PACKAGE
   ROLE
   USER
 }
