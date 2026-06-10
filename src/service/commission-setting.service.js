@@ -175,13 +175,11 @@ class CommissionSettingService {
           {
             operator: {
               contains: search,
-              mode: "insensitive",
             },
           },
           {
             operatorCode: {
               contains: search,
-              mode: "insensitive",
             },
           },
         ],
