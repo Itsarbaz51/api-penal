@@ -103,6 +103,22 @@ class UserService {
 
       include: {
         package: true,
+        permissions: {
+          select: {
+            id: true,
+            serviceId: true,
+            canView: true,
+            canProcess: true,
+            isActive: true,
+            service: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              },
+            },
+          },
+        },
       },
 
       orderBy: {
