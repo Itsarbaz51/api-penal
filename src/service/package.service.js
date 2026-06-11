@@ -33,7 +33,7 @@ class PackageService {
           {
             name: {
               contains: search,
-              lte: "insensitive",
+              mode: "insensitive",
             },
           },
         ],
@@ -45,6 +45,27 @@ class PackageService {
         where,
         skip,
         take: limit,
+
+        include: {
+          permissions: {
+            select: {
+              id: true,
+              serviceId: true,
+              canView: true,
+              canProcess: true,
+              isActive: true,
+
+              service: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                },
+              },
+            },
+          },
+        },
+
         orderBy: {
           createdAt: "desc",
         },
@@ -57,6 +78,7 @@ class PackageService {
 
     return {
       data: packages,
+
       pagination: {
         total,
         page,
