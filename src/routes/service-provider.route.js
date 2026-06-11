@@ -11,6 +11,7 @@ const route = Router();
 route.post(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({
     body: ServiceProviderValidationSchemas.createServiceProvider,
   }),
@@ -21,6 +22,7 @@ route.post(
 route.get(
   "/",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({
     query: ServiceProviderValidationSchemas.getAllServiceProviders,
   }),
@@ -31,6 +33,7 @@ route.get(
 route.patch(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({
     params: ServiceProviderValidationSchemas.serviceProviderIdParam,
   }),
@@ -44,6 +47,7 @@ route.patch(
 route.delete(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["SUPER_ADMIN"]),
   ValidateRequest.validate({
     params: ServiceProviderValidationSchemas.serviceProviderIdParam,
   }),
