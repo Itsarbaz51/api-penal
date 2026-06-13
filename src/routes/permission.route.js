@@ -27,6 +27,12 @@ route.get(
   asyncHandler(PermissionController.getAll)
 );
 
+route.get(
+  "/my",
+  AuthMiddleware.isAuthenticated,
+  asyncHandler(PermissionController.myPermissions)
+);
+
 // UPDATE
 route.patch(
   "/:id",

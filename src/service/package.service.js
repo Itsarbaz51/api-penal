@@ -33,7 +33,6 @@ class PackageService {
           {
             name: {
               contains: search,
-              mode: "insensitive",
             },
           },
         ],

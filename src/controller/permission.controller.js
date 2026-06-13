@@ -50,6 +50,12 @@ class PermissionController {
     return res.json(ApiResponse.success(result));
   };
 
+  static myPermissions = async (req, res) => {
+    const result = await PermissionService.myPermissions(req.user.id);
+
+    return res.json(ApiResponse.success(result));
+  };
+
   // DELETE
   static delete = async (req, res) => {
     const { id } = req.params;

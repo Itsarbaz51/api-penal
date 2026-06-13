@@ -156,6 +156,82 @@ class PermissionService {
     };
   }
 
+  static async myPermissions(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        package: true,
+      },
+    });
+
+    const services = await prisma.service.findMany({
+      where: {
+        isActive: true,
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    const permissions = await prisma.permission.findMany({
+      where: {
+        OR: [
+          {
+            userId,
+          },
+
+          {
+            packageId: user.packageId,
+          },
+        ],
+      },
+    });
+
+    const permissionMap = new Map();
+
+    // PACKAGE FIRST
+    permissions
+      .filter((p) => p.packageId)
+      .forEach((p) => {
+        permissionMap.set(p.serviceId, {
+          source: "PACKAGE",
+          isActive: p.isActive,
+          canView: p.canView,
+          canProcess: p.canProcess,
+        });
+      });
+
+    // USER OVERRIDE
+    permissions
+      .filter((p) => p.userId)
+      .forEach((p) => {
+        permissionMap.set(p.serviceId, {
+          source: "USER",
+          isActive: p.isActive,
+          canView: p.canView,
+          canProcess: p.canProcess,
+        });
+      });
+
+    return services.map((service) => {
+      const permission = permissionMap.get(service.id);
+
+      return {
+        serviceId: service.id,
+        serviceName: service.name,
+        serviceCode: service.code,
+
+        hasPermission: permission?.isActive,
+
+        canView: permission?.canView,
+        canProcess: permission?.canProcess,
+
+        source: permission?.source,
+      };
+    });
+  }
+
   // DELETE
   static async delete(id) {
     const exists = await prisma.permission.findUnique({
