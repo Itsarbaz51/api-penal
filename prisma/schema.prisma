@@ -183,6 +183,40 @@ model ApiKey {
   @@map("api_keys")
 }
 
+model ApiReference {
+  id String @id @default(uuid())
+
+  name String
+
+  module String
+  // BBPS
+  // PAYOUT
+  // VERIFICATION
+
+  method String
+
+  endpoint String
+
+  description String? @db.LongText
+
+  requestFields Json? @map("request_fields")
+  // body fields
+
+  sampleRequest Json? @map("sample_request")
+
+  sampleResponse Json? @map("sample_response")
+
+  sortOrder Int @default(0) @map("sort_order")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([module])
+  @@map("api_references")
+}
+
 model Kyc {
   id                 String        @id @default(uuid())
   registrationNumber String        @unique @map("registration_number")

@@ -15,6 +15,7 @@ import auditLogRoute from "./audit-log.route.js";
 import loginLogRoute from "./login-event.route.js";
 import apiKeyProviderMappingsRoute from "./api-key-provider-mapping.route.js";
 import bbpsRoute from "./bbps/bbps.route.js";
+import apiReferenceRoute from "./api-reference.route.js";
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use("/audit-logs", auditLogRoute);
 router.use("/login-logs", loginLogRoute);
 router.use("/api-key-provider-mappings", apiKeyProviderMappingsRoute);
 router.use("/bbps", bbpsRoute);
+router.use("/api-references", apiReferenceRoute);
 
 export default router;
