@@ -72,17 +72,27 @@ class UserService {
       },
     });
 
-    await Promise.all([
-      WalletService.create({
-        userId: user.id,
-        walletType: "PRIMARY",
-      }),
+    await WalletService.create({
+      userId: user.id,
 
-      WalletService.create({
-        userId: user.id,
-        walletType: "COMMISSION",
-      }),
-    ]);
+      wallets: [
+        {
+          walletType: "PRIMARY",
+        },
+
+        {
+          walletType: "COMMISSION",
+        },
+
+        {
+          walletType: "GST",
+        },
+
+        {
+          walletType: "TDS",
+        },
+      ],
+    });
 
     return {
       ...user,
