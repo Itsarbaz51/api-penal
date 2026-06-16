@@ -246,6 +246,21 @@ model Kyc {
   @@map("kycs")
 }
 
+model ApiLanguage {
+  id String @id @default(uuid())
+
+  name String @unique
+  slug String @unique
+
+  template String @db.LongText
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("api_languages")
+}
+
 model KycDocument {
   id             String    @id @default(uuid())
   kycId          String    @map("kyc_id")
