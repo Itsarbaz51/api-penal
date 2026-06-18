@@ -17,6 +17,7 @@ import apiKeyProviderMappingsRoute from "./api-key-provider-mapping.route.js";
 import bbpsRoute from "./bbps/bbps.route.js";
 import apiReferenceRoute from "./api-reference.route.js";
 import apiLanguageRoute from "./api-language.route.js";
+import ledgerEntryRoute from "./ledger-entry.routes.js";
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use("/api-key-provider-mappings", apiKeyProviderMappingsRoute);
 router.use("/bbps", bbpsRoute);
 router.use("/api-references", apiReferenceRoute);
 router.use("/api-languages", apiLanguageRoute);
+router.use("/ledger-entries", ledgerEntryRoute);
 
 export default router;
