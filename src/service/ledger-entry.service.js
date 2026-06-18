@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 
 class LedgerEntryService {
   // CREATE
-  static async create(payload) {
+  static async create(tx, payload) {
     const wallet = await prisma.wallet.findUnique({
       where: {
         id: payload.walletId,
