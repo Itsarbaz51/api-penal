@@ -79,7 +79,7 @@ class ApiReferenceService {
       prisma.apiReference.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: [
           {
             sortOrder: "asc",
