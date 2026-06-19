@@ -41,7 +41,7 @@ class ApiReferenceService {
   static async getAll(payload) {
     const { page = 1, limit = 10, module, isActive, search } = payload;
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where = {
       ...(module && {
@@ -99,9 +99,9 @@ class ApiReferenceService {
     return {
       data,
       total,
-      page,
-
-      totalPages: Math.ceil(total / limit),
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit)),
     };
   }
 

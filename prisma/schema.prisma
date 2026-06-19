@@ -667,38 +667,52 @@ model Transaction {
   idempotencyKey String @unique @map("idempotency_key")
   txnId          String @unique @map("txn_id")
 
-  amount    Float
-  netAmount Float @map("net_amount")
-
-  status                   String  @default("PENDING")
-  serviceProviderMappingId String? @map("service_provider_mapping_id")
-  pricing                  Json?
-
+  // OWNER
   userId   String @map("user_id")
   walletId String @map("wallet_id")
 
+  // SERVICE
+  serviceProviderId String? @map("service_provider_id")
+
+  // AMOUNTS
+  amount    Float
+  netAmount Float @map("net_amount")
+
+  // STATUS
+  status String @default("PENDING")
+
+  // PRICING SNAPSHOT
+  pricing Json?
+
+  // PROVIDER
   providerReference    String? @map("provider_reference")
   requestInit          Json?   @map("request_init")
   providerResponseInit Json?   @map("provider_response_init")
   providerResponse     Json?   @map("provider_response")
-  retryCount           Int     @default(0) @map("retry_count")
 
+  retryCount Int @default(0) @map("retry_count")
+
+  // TIMESTAMPS
   initiatedAt   DateTime  @default(now()) @map("initiated_at")
   processedAt   DateTime? @map("processed_at")
   completedAt   DateTime? @map("completed_at")
   lastCheckedAt DateTime? @map("last_checked_at")
 
-  commissionEarnings CommissionEarning[]
-  ledgerEntries      LedgerEntry[]
-
+  // RELATIONS
   user   User   @relation(fields: [userId], references: [id])
   wallet Wallet @relation(fields: [walletId], references: [id])
 
-  serviceProvider   ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
-  serviceProviderId String?
+  serviceProvider ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
 
+  ledgerEntries      LedgerEntry[]
+  commissionEarnings CommissionEarning[]
+
+  // INDEXES
+  @@index([userId])
+  @@index([walletId])
+  @@index([serviceProviderId])
+  @@index([status])
   @@index([userId, status])
-  @@index([status, initiatedAt])
   @@map("transactions")
 }
 

@@ -1,96 +1,187 @@
+import prisma from "../db/db.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export default class TransactionService {
   // CREATE
-  static async create(
-    tx,
-    {
-      txnId,
-      userId,
-      walletId,
-      serviceProviderMappingId,
-      amount,
-      idempotencyKey,
-      providerReference = null,
-      requestPayload,
-      pricing,
+  static async create(tx, payload) {
+    const wallet = await tx.wallet.findUnique({
+      where: {
+        id: payload.walletId,
+      },
+    });
+
+    if (!wallet) {
+      throw ApiError.notFound("Wallet not found");
     }
-  ) {
-    if (!userId || !walletId)
-      throw ApiError.badRequest("userId & walletId required");
 
-    // Idempotency Check
-    if (idempotencyKey) {
-      const existingTxn = await tx.transaction.findUnique({
-        where: { idempotencyKey },
-      });
+    const existingTxn = await tx.transaction.findFirst({
+      where: {
+        OR: [
+          {
+            txnId: payload.txnId,
+          },
+          {
+            idempotencyKey: payload.idempotencyKey,
+          },
+        ],
+      },
+    });
 
-      if (existingTxn) {
-        return {
-          transaction: existingTxn,
-        };
-      }
+    if (existingTxn) {
+      return {
+        transaction: existingTxn,
+        isDuplicate: true,
+      };
     }
 
     const transaction = await tx.transaction.create({
       data: {
-        txnId,
-        userId,
-        walletId,
-        providerReference,
-        serviceProviderMappingId,
-        amount,
-        pricing,
-        netAmount: amount,
-        status: "PENDING",
-        idempotencyKey,
+        txnId: payload.txnId,
+        idempotencyKey: payload.idempotencyKey,
+
+        userId: payload.userId,
+        walletId: payload.walletId,
+
+        serviceProviderId: payload.serviceProviderId,
+
+        amount: Number(payload.amount),
+        netAmount: Number(payload.netAmount ?? payload.amount),
+
+        pricing: payload.pricing,
+
+        requestInit: payload.requestInit,
+
+        status: payload.status || "PENDING",
+
+        providerReference: payload.providerReference,
       },
     });
 
-    return { transaction };
+    return {
+      transaction,
+      isDuplicate: false,
+    };
   }
 
-  // UPDATE (Provider response / Final status)
-  static async update(
-    tx,
-    {
-      transactionId,
-      status,
-      netAmount,
-      pricing,
-      providerReference,
-      providerResponse,
-      providerInitData,
-      retryCount,
-      lastCheckedAt,
-    }
-  ) {
-    if (!transactionId) throw ApiError.badRequest("TransactionId required");
+  // SUCCESS
+  static async success(tx, transactionId, data = {}) {
+    return tx.transaction.update({
+      where: {
+        id: transactionId,
+      },
 
-    const existingTxn = await tx.transaction.findUnique({
-      where: { id: transactionId },
-    });
-
-    if (!existingTxn) throw ApiError.notFound("Transaction not found");
-
-    if (existingTxn.status === "SUCCESS")
-      throw ApiError.badRequest("Transaction already completed");
-
-    const updatedTxn = await tx.transaction.update({
-      where: { id: transactionId },
       data: {
-        status: status ?? existingTxn.status,
-        netAmount: netAmount ?? existingTxn.netAmount,
-        providerReference,
-        providerResponse,
-        retryCount,
-        pricing,
-        lastCheckedAt,
-        processedAt: status ? new Date() : undefined,
-        completedAt: status === "SUCCESS" ? new Date() : undefined,
+        status: "SUCCESS",
+
+        providerReference: data.providerReference,
+
+        providerResponseInit: data.providerResponseInit,
+
+        providerResponse: data.providerResponse,
+
+        processedAt: new Date(),
+
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  // FAILED
+  static async failed(tx, transactionId, data = {}) {
+    return tx.transaction.update({
+      where: {
+        id: transactionId,
+      },
+
+      data: {
+        status: "FAILED",
+
+        providerReference: data.providerReference,
+
+        providerResponseInit: data.providerResponseInit,
+
+        providerResponse: data.providerResponse,
+
+        processedAt: new Date(),
+
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  // PENDING
+  static async pending(tx, transactionId, data = {}) {
+    return tx.transaction.update({
+      where: {
+        id: transactionId,
+      },
+
+      data: {
+        status: "PENDING",
+
+        providerReference: data.providerReference,
+
+        providerResponseInit: data.providerResponseInit,
+
+        providerResponse: data.providerResponse,
+
+        processedAt: new Date(),
+      },
+    });
+  }
+
+  // GET BY ID
+  static async getById(id) {
+    const transaction = await prisma.transaction.findUnique({
+      where: {
+        id,
+      },
+
+      include: {
+        user: true,
+        wallet: true,
+        serviceProvider: true,
+        ledgerEntries: true,
+        commissionEarnings: true,
       },
     });
 
-    return updatedTxn;
+    if (!transaction) {
+      throw ApiError.notFound("Transaction not found");
+    }
+
+    return transaction;
+  }
+
+  // GET BY TXN ID
+  static async getByTxnId(txnId) {
+    const transaction = await prisma.transaction.findUnique({
+      where: {
+        txnId,
+      },
+    });
+
+    if (!transaction) {
+      throw ApiError.notFound("Transaction not found");
+    }
+
+    return transaction;
+  }
+
+  // RETRY COUNT
+  static async incrementRetry(tx, transactionId) {
+    return tx.transaction.update({
+      where: {
+        id: transactionId,
+      },
+
+      data: {
+        retryCount: {
+          increment: 1,
+        },
+
+        lastCheckedAt: new Date(),
+      },
+    });
   }
 }
