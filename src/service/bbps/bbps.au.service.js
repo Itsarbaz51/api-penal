@@ -1,8 +1,10 @@
 import prisma from "../../db/db.js";
+import SettlementEngine from "../../engine/settlement.engine.js";
 import getBbpsPlugin from "../../plugin_registry/bbps/pluginRegistry.js";
 import { ApiError } from "../../utils/ApiError.js";
 import CryptoService from "../../utils/crypto.utils.js";
 import crypto from "node:crypto";
+import HelperUtils from "../../utils/helper.utils.js";
 
 export default class AuBbpsService {
   // BILLER LIST
@@ -798,12 +800,10 @@ export default class AuBbpsService {
 
     const config = serviceProvider.config || {};
 
-    // FETCH CHECK
     const fetch = await prisma.bbpsFetchBill.findUnique({
       where: {
         fetchId: payload.fetchId,
       },
-
       include: {
         biller: true,
       },
@@ -813,159 +813,98 @@ export default class AuBbpsService {
       throw ApiError.notFound("Fetch bill not found");
     }
 
-    const generate35 = () => {
-      let id = "";
+    // requestPayload build code same rahega
+    // requestPayload
+    return prisma.$transaction(async (tx) => {
+      const txnId = HelperUtils.generateUniqueId("BBPS");
 
-      while (id.length < 35) {
-        id += crypto.randomBytes(32).toString("hex");
+      const { transaction, wallet, pricing, isDuplicate } =
+        await SettlementEngine.execute({
+          tx,
+          actor,
+          payload: {
+            ...payload,
+            txnId,
+          },
+          serviceProvider,
+          category: fetch?.rawResponse?.data?.category,
+          operator: fetch?.rawResponse?.data?.operator,
+          operatorCode: fetch?.rawResponse?.data?.operatorCode,
+          paymentMethod: "BBPS",
+          cardNetwork: null,
+        });
+
+      if (isDuplicate) {
+        return {
+          transactionId: transaction.id,
+          status: transaction.status,
+        };
       }
 
-      return id.substring(0, 35);
-    };
+      try {
+        const response = await plugin.billPayment(requestPayload);
 
-    // JULIAN TXN REF
-    const generateJulianTxnRef = (prefix = "AU01") => {
-      const now = new Date();
+        console.log(response);
 
-      // YEAR LAST 1 DIGITS
-      const year = now.getFullYear().toString().slice(-1);
+        const responseCode = response?.reason?.responseCode;
 
-      // DAY OF YEAR (JULIAN)
-      const start = new Date(now.getFullYear(), 0, 0);
+        // SUCCESS
+        if (responseCode === "000") {
+          await SettlementEngine.success({
+            tx,
+            actor,
+            transaction,
+            wallet,
+            serviceProvider,
+            pricing,
+            providerReference: response.reason?.approvalRefNum,
+            providerResponse: response,
+          });
 
-      const diff =
-        now -
-        start +
-        (start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000;
+          return {
+            transactionId: transaction.id,
+            txnReferenceId: response.txn?.txnReferenceId,
+            providerReference: response.reason?.approvalRefNum,
+            status: "SUCCESS",
+            response,
+          };
+        }
 
-      const day = Math.floor(diff / (1000 * 60 * 60 * 24))
-        .toString()
-        .padStart(3, "0");
+        // PENDING
+        if (responseCode === "009" || responseCode === "091") {
+          await TransactionService.pending(tx, transaction.id, {
+            providerReference: response.reason?.approvalRefNum,
+            providerResponse: response,
+          });
 
-      // RANDOM 12 DIGITS
-      const random = Math.floor(100000000000 + Math.random() * 900000000000);
+          return {
+            transactionId: transaction.id,
+            status: "PENDING",
+            response,
+          };
+        }
 
-      // FINAL
-      return `${prefix}${year}${day}${random}`;
-    };
+        // FAILED
+        await SettlementEngine.failed({
+          tx,
+          wallet,
+          pricing,
+        });
 
-    const ts = new Date().toISOString().replace("Z", "+05:30");
+        throw ApiError.badRequest(
+          response?.reason?.complianceReason ||
+            response?.reason?.responseReason ||
+            "Bill payment failed"
+        );
+      } catch (error) {
+        await SettlementEngine.failed({
+          tx,
+          wallet,
+          pricing,
+        });
 
-    const refId = generate35();
-
-    const msgId = generate35();
-
-    const julianTxnRef = generateJulianTxnRef("AU01");
-
-    const requestPayload = {
-      Head: {
-        Ver: "1.0",
-        OrigInst: config.origInst || "AU01",
-        RefId: refId,
-        ts,
-      },
-
-      Txn: {
-        MsgId: msgId,
-        TxnReferenceId: julianTxnRef,
-        ts,
-        Type: "FORWARD TYPE REQUEST",
-
-        RiskScores: [
-          {
-            Type: "TXNRISK",
-            Value: "030",
-            Provider: config.origInst || "AU01",
-          },
-          {
-            Type: "TXNRISK",
-            Value: "030",
-            Provider: "BBPS",
-          },
-        ],
-      },
-
-      Analytics: [
-        {
-          Name: "PAYREQUESTSTART",
-          Value: ts,
-        },
-        {
-          Name: "PAYREQUESTEND",
-          Value: ts,
-        },
-      ],
-
-      Customer: {
-        Mobile: payload.mobile || actor.phoneNumber,
-      },
-
-      Agent: {
-        Device: [
-          {
-            Value: "INTB",
-            Name: "INITIATING_CHANNEL",
-          },
-          {
-            Value: "::1",
-            Name: "IP",
-          },
-          {
-            Value: "BC-BE-33-65-E6-AC",
-            Name: "MAC",
-          },
-        ],
-
-        Id: config.agentId || "AU01AU03AGT525314031",
-      },
-
-      BillDetails: {
-        CustomerParams: fetch.customerParams,
-
-        BillerId: fetch.biller.billerId,
-      },
-
-      Amount: {
-        Amount: String(payload.amount),
-        CustConvFee: "0",
-        CouCustConvFee: "0",
-        Currency: "356",
-      },
-
-      PaymentMethod: {
-        QuickPay: "No",
-        PaymentMode: config.paymentMode || "Internet Banking",
-        SplitPay: "No",
-        OffusPay: "Yes",
-      },
-
-      paymentInformation: [
-        {
-          Name: config.paymentInformation.name,
-          Value: config.paymentInformation.value,
-        },
-      ],
-
-      debitAccountNo: config.debitAccountNo,
-    };
-
-    const response = await plugin.billPayment(requestPayload);
-    console.log(response);
-    
-
-    if (response?.reason?.responseCode !== "000") {
-      throw ApiError.badRequest(
-        response?.reason?.complianceReason ||
-          response?.reason?.responseReason ||
-          "Bill payment failed"
-      );
-    }
-
-    return {
-      txnReferenceId: response.txn?.txnReferenceId,
-      providerReference: response.reason?.approvalRefNum,
-      status: response.reason?.responseReason,
-      response,
-    };
+        throw error;
+      }
+    });
   }
 }

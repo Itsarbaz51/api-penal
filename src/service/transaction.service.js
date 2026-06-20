@@ -4,25 +4,11 @@ import { ApiError } from "../utils/ApiError.js";
 export default class TransactionService {
   // CREATE
   static async create(tx, payload) {
-    const wallet = await tx.wallet.findUnique({
-      where: {
-        id: payload.walletId,
-      },
-    });
-
-    if (!wallet) {
-      throw ApiError.notFound("Wallet not found");
-    }
-
     const existingTxn = await tx.transaction.findFirst({
       where: {
         OR: [
-          {
-            txnId: payload.txnId,
-          },
-          {
-            idempotencyKey: payload.idempotencyKey,
-          },
+          { txnId: payload.txnId },
+          { idempotencyKey: payload.idempotencyKey },
         ],
       },
     });
@@ -44,16 +30,16 @@ export default class TransactionService {
 
         serviceProviderId: payload.serviceProviderId,
 
+        serviceCode: payload.serviceCode,
+        providerCode: payload.providerCode,
+
         amount: Number(payload.amount),
         netAmount: Number(payload.netAmount ?? payload.amount),
 
         pricing: payload.pricing,
-
         requestInit: payload.requestInit,
 
-        status: payload.status || "PENDING",
-
-        providerReference: payload.providerReference,
+        status: "PENDING",
       },
     });
 

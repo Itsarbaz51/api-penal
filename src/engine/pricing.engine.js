@@ -1,53 +1,85 @@
-import CommissionUtils from "../utils/commission.utils.js";
-
 export default class PricingEngine {
-  static calculateCommission({
-    amount,
-    type,
-    value,
-    providerCost,
-    tdsPercent = 0,
-  }) {
-    const commission = CommissionUtils.calculate(type, value, amount);
+  static calculateCommission({ amount = 0, config }) {
+    const txnAmount = amount;
 
-    const tdsAmount = (commission * Number(tdsPercent)) / 100;
+    // ================= COMMISSION =================
+    const commission =
+      config.type === "PERCENTAGE"
+        ? (txnAmount * config.value) / 100
+        : config.value || 0;
+
+    // ================= PROVIDER COST =================
+    const providerCost =
+      config.provider?.type === "PERCENTAGE"
+        ? (txnAmount * config.provider.value) / 100
+        : config.provider?.value || 0;
+
+    // ================= TAX =================
+    const tdsCommission =
+      config.tax?.commissionTdsPercent > 0
+        ? (commission * config.tax.commissionTdsPercent) / 100
+        : 0;
+
+    const tdsProvider =
+      config.tax?.providerTdsPercent > 0
+        ? (providerCost * config.tax.providerTdsPercent) / 100
+        : 0;
+
+    const netCommission = commission - tdsCommission;
+    const totalDebit = txnAmount;
 
     return {
-      txnAmount: Number(amount),
-
+      txnAmount,
       commission,
+      netCommission,
+      providerCost,
 
-      providerCost: Number(providerCost),
-
-      tdsAmount,
-
-      netCommission: commission - tdsAmount,
-
-      totalDebit: Number(amount),
+      // TAX
+      tdsCommission,
+      tdsProvider,
+      totalDebit,
     };
   }
 
-  static calculateSurcharge({
-    amount,
-    type,
-    value,
-    providerCost,
-    gstPercent = 0,
-  }) {
-    const surcharge = CommissionUtils.calculate(type, value, amount);
+  static calculateSurcharge({ amount = 0, config }) {
+    const txnAmount = amount;
 
-    const gstAmount = (surcharge * Number(gstPercent)) / 100;
+    const surcharge =
+      config.type === "PERCENTAGE"
+        ? (txnAmount * config.value) / 100
+        : config.value || 0;
+
+    // PROVIDER COST (FROM CONFIG, NOT MAPPING)
+    const providerCost =
+      config.provider.type === "PERCENTAGE"
+        ? (txnAmount * config.provider.value) / 100
+        : config.provider.value || 0;
+
+    // TAX CALCULATION (FROM CONFIG.tax)
+
+    // Provider GST (INPUT)
+    const gstProvider =
+      config.tax?.providerGstPercent > 0
+        ? (providerCost * config.tax.providerGstPercent) / 100
+        : 0n;
+
+    // Surcharge GST (OUTPUT)
+    const gstSurcharge =
+      config.tax?.surchargeGstPercent > 0
+        ? (surcharge * config.tax.surchargeGstPercent) / 100
+        : 0n;
+
+    // 🔥 FINAL
+    const totalDebit =
+      txnAmount + surcharge + providerCost + gstProvider + gstSurcharge;
 
     return {
-      txnAmount: Number(amount),
-
+      txnAmount,
       surcharge,
-
-      providerCost: Number(providerCost),
-
-      gstAmount,
-
-      totalDebit: Number(amount) + surcharge + gstAmount + Number(providerCost),
+      providerCost,
+      gstProvider,
+      gstSurcharge,
+      totalDebit,
     };
   }
 }
