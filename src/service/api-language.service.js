@@ -18,9 +18,7 @@ class ApiLanguageService {
     });
 
     if (exists) {
-      throw ApiError.conflict(
-        "Language already exists"
-      );
+      throw ApiError.conflict("Language already exists");
     }
 
     return prisma.apiLanguage.create({
@@ -35,43 +33,38 @@ class ApiLanguageService {
     });
 
     if (!exists) {
-      throw ApiError.notFound(
-        "Language not found"
-      );
+      throw ApiError.notFound("Language not found");
     }
 
     if (payload.name || payload.slug) {
-      const duplicate =
-        await prisma.apiLanguage.findFirst({
-          where: {
-            id: {
-              not: id,
-            },
-
-            OR: [
-              ...(payload.name
-                ? [
-                    {
-                      name: payload.name,
-                    },
-                  ]
-                : []),
-
-              ...(payload.slug
-                ? [
-                    {
-                      slug: payload.slug,
-                    },
-                  ]
-                : []),
-            ],
+      const duplicate = await prisma.apiLanguage.findFirst({
+        where: {
+          id: {
+            not: id,
           },
-        });
+
+          OR: [
+            ...(payload.name
+              ? [
+                  {
+                    name: payload.name,
+                  },
+                ]
+              : []),
+
+            ...(payload.slug
+              ? [
+                  {
+                    slug: payload.slug,
+                  },
+                ]
+              : []),
+          ],
+        },
+      });
 
       if (duplicate) {
-        throw ApiError.conflict(
-          "Language already exists"
-        );
+        throw ApiError.conflict("Language already exists");
       }
     }
 
@@ -84,14 +77,9 @@ class ApiLanguageService {
 
   // GET ALL
   static async getAll(payload) {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      isActive,
-    } = payload;
+    const { page = 1, limit = 10, search, isActive } = payload;
 
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where = {
       ...(isActive !== undefined && {
@@ -123,7 +111,7 @@ class ApiLanguageService {
 
         skip,
 
-        take: limit,
+        take: Number(limit),
 
         orderBy: {
           createdAt: "desc",
@@ -140,23 +128,20 @@ class ApiLanguageService {
 
       total,
 
-      page,
+      page: Number(page),
 
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / Number(limit)),
     };
   }
 
   // GET BY ID
   static async getById(id) {
-    const exists =
-      await prisma.apiLanguage.findUnique({
-        where: { id },
-      });
+    const exists = await prisma.apiLanguage.findUnique({
+      where: { id },
+    });
 
     if (!exists) {
-      throw ApiError.notFound(
-        "Language not found"
-      );
+      throw ApiError.notFound("Language not found");
     }
 
     return exists;
@@ -164,15 +149,12 @@ class ApiLanguageService {
 
   // DELETE
   static async delete(id) {
-    const exists =
-      await prisma.apiLanguage.findUnique({
-        where: { id },
-      });
+    const exists = await prisma.apiLanguage.findUnique({
+      where: { id },
+    });
 
     if (!exists) {
-      throw ApiError.notFound(
-        "Language not found"
-      );
+      throw ApiError.notFound("Language not found");
     }
 
     return prisma.apiLanguage.delete({
