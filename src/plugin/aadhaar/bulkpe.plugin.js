@@ -1,5 +1,5 @@
 import axios from "axios";
-import AadhaarPluginInterface from "./aahdaar.interface.js";
+import AadhaarPluginInterface from "./aadhaar.interface.js";
 import { ApiError } from "../../utils/ApiError.js";
 
 class BulkpeAadhaarPlugin extends AadhaarPluginInterface {
