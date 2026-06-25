@@ -84,13 +84,12 @@ class ApiKeyMiddleware {
         req.socket?.remoteAddress ||
         req.ip;
 
-      if (apiKeyData.allowedIps && Array.isArray(apiKeyData.allowedIps)) {
-        if (
-          apiKeyData.allowedIps.length > 0 &&
-          !apiKeyData.allowedIps.includes(requestIp)
-        ) {
-          throw ApiError.forbidden("IP not allowed");
-        }
+      if (!Array.isArray(apiKeyData.allowedIps)) {
+        throw ApiError.forbidden("No allowed IP configured");
+      }
+
+      if (!apiKeyData.allowedIps.includes(requestIp)) {
+        throw ApiError.forbidden("IP not allowed");
       }
 
       // UPDATE LAST USED
