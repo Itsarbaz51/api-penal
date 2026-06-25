@@ -16,22 +16,13 @@ class ServiceProviderValidationSchemas {
 
       supportPaymentMethod: z.boolean().optional(),
 
-      // PAYMENT GATEWAY
-      paymentMethod: z.string().optional(),
-
-      network: z.string().optional(),
-
-      // BBPS / RECHARGE
-      category: z.string().optional(),
-
-      operator: z.string().optional(),
-
-      operatorCode: z.string().optional(),
-
-      // DMT / PAYOUT
-      bankCode: z.string().optional(),
-
-      transactionType: z.string().optional(),
+      paymentMethod: z.string().nullable().optional(),
+      network: z.string().nullable().optional(),
+      category: z.string().nullable().optional(),
+      operator: z.string().nullable().optional(),
+      operatorCode: z.string().nullable().optional(),
+      bankCode: z.string().nullable().optional(),
+      transactionType: z.string().nullable().optional(),
 
       // SLAB
       minAmount: z.number().optional(),

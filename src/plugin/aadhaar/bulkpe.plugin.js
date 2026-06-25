@@ -29,10 +29,7 @@ class BulkpeAadhaarPlugin extends AadhaarPluginInterface {
         );
       }
 
-      return {
-        referenceId: response?.data?.data?.ref_id,
-        response: response?.data,
-      };
+      return response?.data;
     } catch (err) {
       throw ApiError.internal(err);
     }

@@ -97,7 +97,7 @@ class ApiKeyMiddleware {
       prisma.apiKey
         .update({
           where: {
-            id: apiKeyData.id,
+            id: apiKeyData?.id,
           },
 
           data: {
@@ -109,7 +109,7 @@ class ApiKeyMiddleware {
 
       // REQUEST ATTACH
       req.apiKey = {
-        id: apiKeyData.id,
+        id: apiKeyData?.id,
         apiKey: apiKeyData.apiKey,
         mappings: apiKeyData.apiKeyProviderMappings,
       };

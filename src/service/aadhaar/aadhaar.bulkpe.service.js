@@ -20,12 +20,9 @@ export default class BulkpeAadhaarService {
       serviceProvider.config
     );
 
-    const response = await plugin.sendOtp(requestPayload);
+    const response = await plugin.sendOtp(payload);
 
-    if (!response.status) {
-      throw ApiError.badRequest(response.message || "Failed to send OTP");
-    }
-    return response.data;
+    return response;
   }
 
   static async OtpVerify(payload, actor, serviceProvider) {

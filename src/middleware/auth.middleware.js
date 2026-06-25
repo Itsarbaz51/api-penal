@@ -48,7 +48,7 @@ class AuthMiddleware {
       }
 
       if (!roles.includes(req.user.role)) {
-        return next(ApiError.forbidden("Access denied"));
+        return next(ApiError.forbidden(`Access denied ${req?.user?.role}`));
       }
 
       next();

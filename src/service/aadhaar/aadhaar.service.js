@@ -17,7 +17,7 @@ export default class AadhaarService {
   // Send OTP
   static async sendOtp(payload, actor, apiKey) {
     const serviceProvider = await ProviderRoutingResolver.resolve({
-      apiKeyId: apiKey.id,
+      apiKeyId: apiKey?.id,
       serviceCode: "AADHAAR",
     });
 

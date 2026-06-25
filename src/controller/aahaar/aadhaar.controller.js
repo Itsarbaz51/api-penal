@@ -1,7 +1,7 @@
 import asyncHandler from "../../utils/AsyncHandler.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { ApiError } from "../../utils/ApiError.js";
-import AadhaarService from "../../service/aadhaar/aadhaar.service.js ";
+import AadhaarService from "../../service/aadhaar/aadhaar.service.js";
 
 class AadhaarController {
   static sendOtp = asyncHandler(async (req, res) => {
