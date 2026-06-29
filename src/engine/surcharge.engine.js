@@ -170,7 +170,7 @@ export default class SurchargeEngine {
         transactionId,
         userId: uid,
         fromUserId: userId,
-        serviceProviderMappingId,
+        serviceProviderId,
         amount: pricing.txnAmount,
         mode: "SURCHARGE",
         type: config?.type || "FLAT",
@@ -190,7 +190,7 @@ export default class SurchargeEngine {
         referenceType: "SURCHARGE",
         amount,
         narration: "Surcharge earning",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
     }
@@ -208,7 +208,7 @@ export default class SurchargeEngine {
         referenceType: "PROVIDER_COST",
         amount: providerCost,
         narration: "Provider cost charged",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
 
@@ -226,7 +226,7 @@ export default class SurchargeEngine {
         referenceType: "PROVIDER_COST",
         amount: providerCost,
         narration: "Provider service cost",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
     }
@@ -244,7 +244,7 @@ export default class SurchargeEngine {
         referenceType: "PROVIDER_GST",
         amount: gstProvider,
         narration: "Provider GST charged",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
 
@@ -262,7 +262,7 @@ export default class SurchargeEngine {
         referenceType: "PROVIDER_GST",
         amount: gstProvider,
         narration: "Provider GST (Input)",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
     }
@@ -286,7 +286,7 @@ export default class SurchargeEngine {
         referenceType: "SURCHARGE_GST",
         amount: gstAmount,
         narration: "GST collected on surcharge",
-        serviceProviderMappingId,
+        serviceProviderId,
         createdBy,
       });
     }

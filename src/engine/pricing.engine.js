@@ -61,13 +61,13 @@ export default class PricingEngine {
     const gstProvider =
       config.tax?.providerGstPercent > 0
         ? (providerCost * config.tax.providerGstPercent) / 100
-        : 0n;
+        : 0;
 
     // Surcharge GST (OUTPUT)
     const gstSurcharge =
       config.tax?.surchargeGstPercent > 0
         ? (surcharge * config.tax.surchargeGstPercent) / 100
-        : 0n;
+        : 0;
 
     // 🔥 FINAL
     const totalDebit =

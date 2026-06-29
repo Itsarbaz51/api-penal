@@ -67,7 +67,9 @@ export async function resolvePricingConfig(
   });
 
   if (!rule) {
-    throw ApiError.badRequest("Commission setting not found");
+    throw ApiError.badRequest(
+      "Commission setting not found, Please contect your admin"
+    );
   }
 
   let mode = rule.mode;
@@ -274,7 +276,7 @@ export default class SettlementEngine {
     actor,
     transaction,
     wallet,
-    serviceProviderMapping,
+    serviceProvider,
     service,
     provider,
     category,
@@ -294,7 +296,7 @@ export default class SettlementEngine {
       transactionId: transaction.id,
       entryType: "DEBIT",
       referenceType: "BBPS TRANSACTION",
-      serviceProviderId: serviceProvider.id,
+      serviceProviderId: serviceProvider?.id,
       amount: transaction.amount,
       narration: `${service.code} (${provider.code}) debit`,
       createdBy: actor.id,
@@ -306,7 +308,7 @@ export default class SettlementEngine {
         userId: actor.id,
         createdBy: actor.id,
         pricing,
-        serviceProviderId: serviceProvider.id,
+        serviceProviderId: serviceProvider?.id,
         category,
         operator,
         paymentMethod,
@@ -321,7 +323,7 @@ export default class SettlementEngine {
         userId: actor.id,
         createdBy: actor.id,
         pricing,
-        serviceProviderId: serviceProvider.id,
+        serviceProviderId: serviceProvider?.id,
         category,
         operator,
         paymentMethod,

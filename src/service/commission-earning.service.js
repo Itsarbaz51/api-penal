@@ -12,7 +12,7 @@ export default class CommissionEarningService {
 
         fromUserId: payload.fromUserId,
 
-        serviceProviderMappingId: payload.serviceProviderMappingId,
+        serviceProviderId: payload.serviceProviderId,
 
         amount: Number(payload.amount),
 

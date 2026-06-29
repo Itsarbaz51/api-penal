@@ -28,11 +28,11 @@ export default class AadhaarService {
   // Verify OTP
   static async verifyOtp(payload, actor, apiKey) {
     const serviceProvider = await ProviderRoutingResolver.resolve({
-      apiKeyId: apiKey.id,
+      apiKeyId: apiKey?.id,
       serviceCode: "AADHAAR",
     });
 
     const Service = this.getService(serviceProvider.provider.code);
-    return Service.verifyOtp(payload, actor, serviceProvider);
+    return Service.OtpVerify(payload, actor, serviceProvider);
   }
 }

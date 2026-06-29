@@ -455,7 +455,7 @@ model CommissionEarning {
   userId        String  @map("user_id")
   fromUserId    String? @map("from_user_id")
 
-  serviceProviderMappingId String @map("service_provider_mapping_id")
+  serviceProviderId String @map("service_provider_id")
 
   amount Float
 
@@ -478,11 +478,10 @@ model CommissionEarning {
 
   createdByUser     User             @relation("CommissionEarningCreatedBy", fields: [createdBy], references: [id])
   serviceProvider   ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
-  serviceProviderId String?
 
   @@index([transactionId, userId])
   @@index([userId, createdAt])
-  @@index([serviceProviderMappingId])
+  @@index([serviceProviderId])
   @@map("commission_earnings")
 }
 
@@ -726,10 +725,9 @@ model LedgerEntry {
   transaction    Transaction? @relation(fields: [transactionId], references: [id])
   wallet         Wallet       @relation(fields: [walletId], references: [id])
 
-  serviceProviderMappingId String?
+  serviceProviderId String?
   createdByUser            User             @relation(fields: [createdBy], references: [id])
   serviceProvider          ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
-  serviceProviderId        String?
 
   @@unique([idempotencyKey])
   @@index([transactionId])
