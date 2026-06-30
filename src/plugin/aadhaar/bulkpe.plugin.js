@@ -37,19 +37,12 @@ class BulkpeAadhaarPlugin extends AadhaarPluginInterface {
 
   // STEP 2: VERIFY OTP
   async verifyOtp({ referenceId, otp }) {
-    console.log(
-      "Verifying OTP with referenceId:",
-      referenceId,
-      "and otp:",
-      otp
-    );
 
     const response = await this.client.post("/verifyAadharOtp", {
       ref_id: referenceId,
       otp,
     });
 
-    console.log(response);
     if (!response.data.status) {
       throw ApiError.badRequest(response.data.message);
     }

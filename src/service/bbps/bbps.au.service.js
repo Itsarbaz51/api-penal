@@ -731,10 +731,8 @@ export default class AuBbpsService {
       },
     };
 
-    console.log(JSON.stringify(requestPayload, null, 2));
 
     const response = await plugin.billFetch(requestPayload);
-    console.log(response);
 
     if (response?.reason?.responseCode !== "000") {
       throw ApiError.badRequest(
@@ -843,9 +841,6 @@ export default class AuBbpsService {
 
       try {
         const response = await plugin.billPayment(requestPayload);
-
-        console.log(response);
-
         const responseCode = response?.reason?.responseCode;
 
         // SUCCESS

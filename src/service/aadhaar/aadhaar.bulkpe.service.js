@@ -100,7 +100,6 @@ export default class BulkpeAadhaarService {
           response?.statusCode === 200 &&
           response?.data?.status === "VALID"
         ) {
-          console.log(serviceProvider);
 
           await SettlementEngine.success({
             tx,

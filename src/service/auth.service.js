@@ -95,6 +95,15 @@ class AuthServices {
       where: {
         id: userId,
       },
+      include: {
+        wallets: {
+          select: {
+            walletType: true,
+            balance: true,
+            holdBalance: true,
+          },
+        },
+      },
     });
 
     if (!user) {
