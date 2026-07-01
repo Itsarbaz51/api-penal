@@ -334,7 +334,6 @@ export default class TransactionService {
         where,
       }),
     ]);
-    console.log({ transactions });
 
     return {
       data: transactions,
