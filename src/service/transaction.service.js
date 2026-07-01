@@ -170,4 +170,181 @@ export default class TransactionService {
       },
     });
   }
+
+  static async getTransactions({
+    page = 1,
+    limit = 10,
+    status,
+    serviceCode,
+    search,
+    date,
+    actor,
+  }) {
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const filters = [];
+
+    console.log(actor);
+
+    switch (actor.role) {
+      case "SUPER_ADMIN":
+        break;
+
+      case "API_HOLDER":
+        filters.push({
+          userId: actor.id,
+        });
+        break;
+
+      default:
+        throw ApiError.forbidden("Unauthorized");
+    }
+
+    if (status) {
+      filters.push({
+        status: status.toUpperCase(),
+      });
+    }
+
+    if (serviceCode) {
+      filters.push({
+        serviceCode: serviceCode.toUpperCase(),
+      });
+    }
+
+    if (search) {
+      filters.push({
+        OR: [
+          {
+            txnId: {
+              contains: search,
+            },
+          },
+          {
+            providerReference: {
+              contains: search,
+            },
+          },
+          {
+            user: {
+              OR: [
+                {
+                  fullName: {
+                    contains: search,
+                  },
+                },
+                {
+                  phoneNumber: {
+                    contains: search,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+    }
+
+    if (date) {
+      let start;
+      let end;
+
+      const now = new Date();
+
+      if (date === "today") {
+        start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+      }
+
+      if (date === "yesterday") {
+        start = new Date();
+        start.setDate(start.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+
+        end = new Date();
+        end.setDate(end.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+      }
+
+      if (date === "week") {
+        start = new Date();
+        start.setDate(now.getDate() - now.getDay());
+        start.setHours(0, 0, 0, 0);
+
+        end = new Date();
+      }
+
+      if (date === "month") {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        end = new Date();
+      }
+
+      if (start && end) {
+        filters.push({
+          initiatedAt: {
+            gte: start,
+            lte: end,
+          },
+        });
+      }
+    }
+
+    const where = filters.length ? { AND: filters } : {};
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        skip,
+        take: limitNumber,
+        orderBy: {
+          initiatedAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              phoneNumber: true,
+              registrationNumber: true,
+            },
+          },
+
+          wallet: {
+            select: {
+              walletType: true,
+            },
+          },
+
+          serviceProvider: {
+            include: {
+              service: true,
+              provider: true,
+            },
+          },
+        },
+      }),
+
+      prisma.transaction.count({
+        where,
+      }),
+    ]);
+    console.log({ transactions });
+
+    return {
+      data: transactions,
+
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
+    };
+  }
 }

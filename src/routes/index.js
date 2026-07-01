@@ -19,6 +19,7 @@ import apiReferenceRoute from "./api-reference.route.js";
 import apiLanguageRoute from "./api-language.route.js";
 import ledgerEntryRoute from "./ledger-entry.routes.js";
 import aadhaarRoutes from "./aadhaar/aadhaar.routes.js";
+import transactionRoute from "./transaction.route.js";
 
 const router = Router();
 
@@ -41,6 +42,7 @@ router.use("/bbps", bbpsRoute);
 router.use("/api-references", apiReferenceRoute);
 router.use("/api-languages", apiLanguageRoute);
 router.use("/ledger-entries", ledgerEntryRoute);
+router.use("/transactions", transactionRoute);
 
 router.use("/aadhaar", aadhaarRoutes);
 
