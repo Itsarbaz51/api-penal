@@ -32,10 +32,7 @@ class ServiceProviderValidationSchemas {
       // PRICING
       mode: z.enum(["NONE", "COMMISSION", "SURCHARGE"]).optional(),
 
-      pricingValueType: z.enum(["NONE", "FIXED", "PERCENTAGE"]).optional(),
-
-      value: z.number().optional(),
-
+      pricingValueType: z.enum(["NONE", "FLAT", "PERCENTAGE"]).optional(),
       providerCost: z.number().optional(),
 
       // TAX

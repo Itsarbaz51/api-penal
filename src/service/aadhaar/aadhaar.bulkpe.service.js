@@ -100,7 +100,6 @@ export default class BulkpeAadhaarService {
           response?.statusCode === 200 &&
           response?.data?.status === "VALID"
         ) {
-
           await SettlementEngine.success({
             tx,
             actor,
@@ -124,8 +123,11 @@ export default class BulkpeAadhaarService {
         // FAILED
         await SettlementEngine.failed({
           tx,
+          transaction,
           wallet,
           pricing,
+          providerReference: response?.data?.ref_id,
+          providerResponse: response,
         });
 
         throw ApiError.badRequest(
@@ -136,10 +138,11 @@ export default class BulkpeAadhaarService {
       } catch (error) {
         await SettlementEngine.failed({
           tx,
+          transaction,
           wallet,
           pricing,
+          providerResponse: error,
         });
-
         throw error;
       }
     });

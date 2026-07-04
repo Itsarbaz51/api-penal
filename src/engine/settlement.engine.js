@@ -261,11 +261,19 @@ export default class SettlementEngine {
       userId,
       txnId: payload.txnId,
       walletId: wallet.id,
+
       serviceProviderId: serviceProvider.id,
+
+      serviceCode: serviceProvider.service.code,
+      providerCode: serviceProvider.provider.code,
+
       amount: pricing.totalDebit,
+
       pricing: { ...pricing, mode: config.mode, config },
+
       idempotencyKey: payload.idempotencyKey,
-      requestPayload: payload,
+
+      requestInit: payload,
     });
 
     return { transaction, wallet: holdWallet, pricing };
@@ -277,6 +285,8 @@ export default class SettlementEngine {
     transaction,
     wallet,
     serviceProvider,
+    providerReference,
+    providerResponse,
     service,
     provider,
     category,
@@ -284,27 +294,27 @@ export default class SettlementEngine {
     cardNetwork,
     operator,
   }) {
-    if (transaction.status === "SUCCESS") return;
+    if (transaction?.status === "SUCCESS") return;
 
     const pricing = transaction.pricing;
     const config = pricing.config;
 
-    await WalletEngine.captureHold(tx, wallet, transaction.amount);
+    await WalletEngine.captureHold(tx, wallet, transaction?.amount);
 
     await LedgerEntryService.create(tx, {
-      walletId: transaction.walletId,
-      transactionId: transaction.id,
+      walletId: transaction?.walletId,
+      transactionId: transaction?.id,
       entryType: "DEBIT",
-      referenceType: "BBPS TRANSACTION",
+      referenceType: `${service.code} TRANSACTION`,
       serviceProviderId: serviceProvider?.id,
-      amount: transaction.amount,
+      amount: transaction?.amount,
       narration: `${service.code} (${provider.code}) debit`,
       createdBy: actor.id,
     });
 
     if (pricing.mode === "SURCHARGE") {
       await SurchargeEngine.distribute(tx, {
-        transactionId: transaction.id,
+        transactionId: transaction?.id,
         userId: actor.id,
         createdBy: actor.id,
         pricing,
@@ -319,7 +329,7 @@ export default class SettlementEngine {
 
     if (pricing.mode === "COMMISSION") {
       await CommissionEngine.distribute(tx, {
-        transactionId: transaction.id,
+        transactionId: transaction?.id,
         userId: actor.id,
         createdBy: actor.id,
         pricing,
@@ -331,9 +341,28 @@ export default class SettlementEngine {
         config,
       });
     }
+
+    await TransactionService.success({
+      tx,
+      transactionId: transaction?.id,
+      providerReference,
+      providerResponse,
+    });
   }
 
-  static async failed({ tx, wallet, pricing }) {
+  static async failed({
+    tx,
+    transaction,
+    wallet,
+    pricing,
+    providerReference,
+    providerResponse,
+  }) {
     await WalletEngine.releaseHold(tx, wallet, pricing.totalDebit);
+
+    await TransactionService.failed(tx, transaction.id, {
+      providerReference,
+      providerResponse,
+    });
   }
 }

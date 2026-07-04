@@ -50,7 +50,24 @@ export default class TransactionService {
   }
 
   // SUCCESS
-  static async success(tx, transactionId, data = {}) {
+  static async success({
+    tx,
+    actor,
+    transactionId,
+    wallet,
+    serviceProvider,
+    service,
+    provider,
+
+    providerReference,
+    providerResponse,
+    providerResponseInit,
+
+    category,
+    paymentMethod,
+    cardNetwork,
+    operator,
+  }) {
     return tx.transaction.update({
       where: {
         id: transactionId,
@@ -59,11 +76,11 @@ export default class TransactionService {
       data: {
         status: "SUCCESS",
 
-        providerReference: data.providerReference,
+        providerReference: providerReference,
 
-        providerResponseInit: data.providerResponseInit,
+        providerResponseInit: providerResponseInit,
 
-        providerResponse: data.providerResponse,
+        providerResponse: providerResponse,
 
         processedAt: new Date(),
 
@@ -185,8 +202,6 @@ export default class TransactionService {
     const skip = (pageNumber - 1) * limitNumber;
 
     const filters = [];
-
-    console.log(actor);
 
     switch (actor.role) {
       case "SUPER_ADMIN":

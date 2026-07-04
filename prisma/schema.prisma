@@ -476,8 +476,8 @@ model CommissionEarning {
 
   fromUser User? @relation("CommissionEarningFromUser", fields: [fromUserId], references: [id])
 
-  createdByUser     User             @relation("CommissionEarningCreatedBy", fields: [createdBy], references: [id])
-  serviceProvider   ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
+  createdByUser   User             @relation("CommissionEarningCreatedBy", fields: [createdBy], references: [id])
+  serviceProvider ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
 
   @@index([transactionId, userId])
   @@index([userId, createdAt])
@@ -554,7 +554,6 @@ model ServiceProvider {
   // PRICING
   mode             PricingMode      @default(NONE)
   pricingValueType PricingValueType @default(NONE) @map("pricing_value_type")
-  value            Float?
   providerCost     Float?           @map("provider_cost")
 
   // TAX
@@ -726,8 +725,8 @@ model LedgerEntry {
   wallet         Wallet       @relation(fields: [walletId], references: [id])
 
   serviceProviderId String?
-  createdByUser            User             @relation(fields: [createdBy], references: [id])
-  serviceProvider          ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
+  createdByUser     User             @relation(fields: [createdBy], references: [id])
+  serviceProvider   ServiceProvider? @relation(fields: [serviceProviderId], references: [id])
 
   @@unique([idempotencyKey])
   @@index([transactionId])

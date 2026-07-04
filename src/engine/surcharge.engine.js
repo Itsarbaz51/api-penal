@@ -255,7 +255,7 @@ export default class SurchargeEngine {
         walletType: "GST",
       });
 
-      await LedgerEngine.create(tx, {
+      await LedgerEntryService.create(tx, {
         walletId: gstWallet.id,
         transactionId,
         entryType: "DEBIT",
