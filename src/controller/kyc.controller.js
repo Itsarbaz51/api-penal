@@ -20,6 +20,12 @@ class KycController {
     return res.json(ApiResponse.success(result));
   };
 
+  static async getById(req, res, next) {
+    const data = await KycService.getById(req.params.id);
+
+    return res.json(ApiResponse.success(data, "KYC retrieved successfully"));
+  }
+
   static delete = async (req, res) => {
     const result = await KycService.delete(req.params.id);
 

@@ -108,7 +108,7 @@ class KycService {
 
   // GET ALL
   static async getAll({ page = 1, limit = 10, status, search }) {
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where = {
       ...(status && {
@@ -120,22 +120,18 @@ class KycService {
           {
             fullName: {
               contains: search,
-              mode: "insensitive",
             },
           },
 
           {
             companyName: {
               contains: search,
-              mode: "insensitive",
             },
           },
 
           {
             registrationNumber: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
         ],
@@ -145,17 +141,19 @@ class KycService {
     const [data, total] = await Promise.all([
       prisma.kyc.findMany({
         where,
-
         skip,
-
-        take: limit,
-
+        take: Number(limit),
         include: {
           addresses: true,
-
           documents: true,
-
-          user: true,
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
         },
 
         orderBy: {
@@ -170,13 +168,35 @@ class KycService {
 
     return {
       data,
-
       total,
-
       page,
-
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  static async getById(id) {
+    const kyc = await prisma.kyc.findUnique({
+      where: { id },
+      include: {
+        addresses: true,
+        documents: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+            registrationNumber: true,
+          },
+        },
+      },
+    });
+
+    if (!kyc) {
+      throw ApiError.notFound("KYC not found");
+    }
+
+    return kyc;
   }
 
   // DELETE

@@ -44,6 +44,15 @@ route.patch(
   asyncHandler(KycController.update)
 );
 
+route.get(
+  "/:id",
+  AuthMiddleware.isAuthenticated,
+  ValidateRequest.validate({
+    params: KycValidationSchemas.kycIdParam,
+  }),
+  asyncHandler(KycController.getById)
+);
+
 route.delete(
   "/:id",
   AuthMiddleware.isAuthenticated,
