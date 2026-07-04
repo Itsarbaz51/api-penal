@@ -84,7 +84,7 @@ class KycService {
   }
 
   // UPDATE
-  static async update(id, payload) {
+  static async update(id, payload, actor) {
     const exists = await prisma.kyc.findUnique({
       where: { id },
     });
@@ -93,14 +93,22 @@ class KycService {
       throw ApiError.notFound("KYC not found");
     }
 
+    // Only SUPER_ADMIN can update status
+    if (payload.status !== undefined && actor.role !== "SUPER_ADMIN") {
+      throw ApiError.forbidden("Only Super Admin can update KYC status");
+    }
+
+    if (payload.status === "REJECTED" && !payload.rejectionReason) {
+      throw ApiError.badRequest(
+        "Rejection Reason are required when rejecting KYC"
+      );
+    }
+
     return prisma.kyc.update({
       where: { id },
-
       data: payload,
-
       include: {
         addresses: true,
-
         documents: true,
       },
     });

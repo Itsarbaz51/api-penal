@@ -47,7 +47,7 @@ class KycValidationSchemas {
       phoneNumber: z.string().optional(),
       companyName: z.string().optional(),
       businessType: z.string().optional(),
-      status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+      status: z.enum(["PENDING", "VERIFIED", "REJECTED"]).optional(),
       rejectionReason: z.string().optional(),
       remarks: z.string().optional(),
       metadata: z.any().optional(),

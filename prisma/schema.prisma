@@ -951,7 +951,7 @@ enum Gender {
 enum KycStatus {
   PENDING
   VERIFIED
-  REJECT
+  REJECTED
 }
 
 enum KycTypes {
