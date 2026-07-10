@@ -5,8 +5,6 @@ class BankDetailValidationSchemas {
   static get createBankDetail() {
     return z
       .object({
-        userId: z.uuid(),
-
         accountHolder: z.string().trim().min(2).optional(),
 
         accountNumber: z

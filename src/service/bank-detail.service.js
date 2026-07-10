@@ -4,10 +4,10 @@ import S3Service from "../utils/S3Service.utils.js";
 
 class BankDetailService {
   // CREATE
-  static async create(payload, file) {
+  static async create(payload, file, user) {
     const userExists = await prisma.user.findUnique({
       where: {
-        id: payload.userId,
+        id: user.id,
       },
     });
 
@@ -35,7 +35,7 @@ class BankDetailService {
     if (payload.isPrimary) {
       await prisma.bankDetail.updateMany({
         where: {
-          userId: payload.userId,
+          userId: user.id,
         },
 
         data: {
@@ -46,7 +46,7 @@ class BankDetailService {
 
     return prisma.bankDetail.create({
       data: {
-        userId: payload.userId,
+        userId: user.id,
 
         accountHolder: payload.accountHolder,
 

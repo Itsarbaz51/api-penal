@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 class BankDetailController {
   // CREATE
   static create = async (req, res) => {
-    const result = await BankDetailService.create(req.body, req.file);
+    const result = await BankDetailService.create(req.body, req.file, req.user);
 
     return res.status(201).json(ApiResponse.success(result));
   };
