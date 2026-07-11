@@ -28,7 +28,10 @@ class BankDetailValidationSchemas {
 
         bankName: z.string().trim().min(2).optional(),
 
-        isPrimary: z.boolean().optional(),
+        isPrimary: z.preprocess(
+          (value) => value === "true" || value === true,
+          z.boolean()
+        ),
       })
 
       .superRefine((data, ctx) => {
@@ -110,11 +113,14 @@ class BankDetailValidationSchemas {
           .regex(/^[0-9]+$/)
           .optional(),
 
-        status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+        status: z.enum(["PENDING", "VERIFIED", "REJECTED"]).optional(),
 
         bankRejectionReason: z.string().optional(),
 
-        isPrimary: z.boolean().optional(),
+        isPrimary: z.preprocess(
+          (value) => value === "true" || value === true,
+          z.boolean().optional()
+        ),
       })
 
       .superRefine((data, ctx) => {
@@ -178,13 +184,8 @@ class BankDetailValidationSchemas {
   static get getAllBankDetails() {
     return z.object({
       page: z.coerce.number().min(1).optional(),
-
       limit: z.coerce.number().min(1).max(100).optional(),
-
-      userId: z.uuid().optional(),
-
       status: z.string().optional(),
-
       search: z.string().optional(),
     });
   }

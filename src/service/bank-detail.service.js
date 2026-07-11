@@ -5,118 +5,213 @@ import S3Service from "../utils/S3Service.utils.js";
 class BankDetailService {
   // CREATE
   static async create(payload, file, user) {
-    const userExists = await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-    });
+    return prisma.$transaction(async (tx) => {
+      const userExists = await tx.user.findUnique({
+        where: { id: user.id },
+      });
 
-    if (!userExists) {
-      throw ApiError.badRequest("User not found");
-    }
+      if (!userExists) {
+        throw ApiError.badRequest("User not found");
+      }
 
-    const exists = await prisma.bankDetail.findUnique({
-      where: {
-        accountNumber: payload.accountNumber,
-      },
-    });
-
-    if (exists) {
-      throw ApiError.conflict("Bank account already exists");
-    }
-
-    let bankProofFile = null;
-
-    if (file) {
-      bankProofFile = await S3Service.upload(file.path, "bank-details");
-    }
-
-    // PRIMARY HANDLE
-    if (payload.isPrimary) {
-      await prisma.bankDetail.updateMany({
+      const exists = await tx.bankDetail.findUnique({
         where: {
-          userId: user.id,
-        },
-
-        data: {
-          isPrimary: false,
+          accountNumber: payload.accountNumber,
         },
       });
-    }
 
-    return prisma.bankDetail.create({
-      data: {
-        userId: user.id,
+      if (exists) {
+        throw ApiError.conflict("Bank account already exists");
+      }
 
-        accountHolder: payload.accountHolder,
+      let bankProofFile = null;
 
-        accountNumber: payload.accountNumber,
+      if (file) {
+        bankProofFile = await S3Service.upload(file.path, "bank-details");
+      }
 
-        phoneNumber: payload.phoneNumber,
+      // Only one primary account
+      if (payload.isPrimary) {
+        await tx.bankDetail.updateMany({
+          where: {
+            userId: user.id,
+            isPrimary: true,
+          },
+          data: {
+            isPrimary: false,
+          },
+        });
+      }
 
-        accountType: payload.accountType,
+      return tx.bankDetail.create({
+        data: {
+          userId: user.id,
 
-        ifscCode: payload.ifscCode,
+          accountHolder: payload.accountHolder,
+          accountNumber: payload.accountNumber,
+          phoneNumber: payload.phoneNumber,
+          accountType: payload.accountType,
+          ifscCode: payload.ifscCode,
+          bankName: payload.bankName,
 
-        bankName: payload.bankName,
+          bankProofFile,
 
-        isPrimary: payload.isPrimary ?? false,
+          isPrimary: payload.isPrimary ?? false,
 
-        bankProofFile,
-      },
+          // SUPER ADMIN => VERIFIED
+          // API HOLDER => PENDING
+          status: user.role === "SUPER_ADMIN" ? "VERIFIED" : "PENDING",
+        },
+      });
     });
   }
 
   // UPDATE
-  static async update(id, payload, file) {
-    const exists = await prisma.bankDetail.findUnique({
-      where: { id },
-    });
+  static async update(id, payload, file, actor) {
+    return prisma.$transaction(async (tx) => {
+      const exists = await tx.bankDetail.findUnique({
+        where: { id },
+      });
 
-    if (!exists) {
-      throw ApiError.notFound("Bank detail not found");
-    }
+      if (!exists) {
+        throw ApiError.notFound("Bank detail not found");
+      }
 
-    let bankProofFile = exists.bankProofFile;
+      // ❌ Only Super Admin can update status
+      if (payload.status && actor.role !== "SUPER_ADMIN") {
+        throw ApiError.forbidden(
+          "Only Super Admin can update bank verification status"
+        );
+      }
 
-    if (file) {
-      // DELETE OLD
-      if (exists.bankProofFile) {
-        await S3Service.delete({
-          fileUrl: exists.bankProofFile,
+      let bankProofFile = exists.bankProofFile;
+
+      if (file) {
+        if (exists.bankProofFile) {
+          await S3Service.delete({
+            fileUrl: exists.bankProofFile,
+          });
+        }
+
+        bankProofFile = await S3Service.upload(file.path, "bank-details");
+      }
+
+      // Only one primary account
+      if (payload.isPrimary) {
+        await tx.bankDetail.updateMany({
+          where: {
+            userId: exists.userId,
+            isPrimary: true,
+            NOT: {
+              id,
+            },
+          },
+          data: {
+            isPrimary: false,
+          },
         });
       }
 
-      bankProofFile = await S3Service.upload(file.path, "bank-details");
-    }
-
-    // PRIMARY HANDLE
-    if (payload.isPrimary) {
-      await prisma.bankDetail.updateMany({
-        where: {
-          userId: exists.userId,
-        },
-
+      return tx.bankDetail.update({
+        where: { id },
         data: {
-          isPrimary: false,
+          ...payload,
+          bankProofFile,
         },
       });
-    }
-
-    return prisma.bankDetail.update({
-      where: { id },
-
-      data: {
-        ...payload,
-
-        bankProofFile,
-      },
     });
   }
 
   // GET ALL
-  static async getAll({ page = 1, limit = 10, userId, status, search }) {
-    const skip = (page - 1) * limit;
+  static async getAll({ page = 1, limit = 10, status, search }, actor) {
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where = {
+      deletedAt: null,
+
+      ...(status && {
+        status,
+      }),
+
+      ...(search && {
+        OR: [
+          {
+            accountHolder: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            accountNumber: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            bankName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }),
+    };
+
+    // ROLE BASED FILTER
+    switch (actor.role) {
+      case "SUPER_ADMIN":
+        // Super Admin apna bank detail nahi dekhega
+        where.user = {
+          role: "API_HOLDER",
+        };
+        break;
+
+      case "API_HOLDER":
+        // API Holder sirf apne bank dekhega
+        where.userId = actor.id;
+        break;
+
+      default:
+        throw ApiError.forbidden("Unauthorized");
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.bankDetail.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          user: {
+            select: {
+              id: true,
+              registrationNumber: true,
+              fullName: true,
+              phoneNumber: true,
+              role: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+
+      prisma.bankDetail.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit)),
+    };
+  }
+
+  // GET ALL
+  static async getAllMy(query, actor) {
+    const { page = 1, limit = 10, status, search } = query;
+    const userId = actor?.id;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where = {
       deletedAt: null,
@@ -134,24 +229,18 @@ class BankDetailService {
           {
             accountHolder: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
 
           {
             accountNumber: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
 
           {
             bankName: {
               contains: search,
-
-              mode: "insensitive",
             },
           },
         ],
@@ -161,21 +250,8 @@ class BankDetailService {
     const [data, total] = await Promise.all([
       prisma.bankDetail.findMany({
         where,
-
         skip,
-
-        take: limit,
-
-        include: {
-          user: {
-            select: {
-              registrationNumber: true,
-              fullName: true,
-              phoneNumber: true,
-            },
-          },
-        },
-
+        take: Number(limit),
         orderBy: {
           createdAt: "desc",
         },

@@ -15,7 +15,8 @@ class BankDetailController {
     const result = await BankDetailService.update(
       req.params.id,
       req.body,
-      req.file
+      req.file,
+      req.user
     );
 
     return res.json(
@@ -25,7 +26,13 @@ class BankDetailController {
 
   // GET ALL
   static getAll = async (req, res) => {
-    const result = await BankDetailService.getAll(req.query);
+    const result = await BankDetailService.getAll(req.query, req.user);
+
+    return res.json(ApiResponse.success(result));
+  };
+
+  static getAllMy = async (req, res) => {
+    const result = await BankDetailService.getAllMy(req.query, req.user);
 
     return res.json(ApiResponse.success(result));
   };

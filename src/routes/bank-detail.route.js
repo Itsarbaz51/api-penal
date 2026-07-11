@@ -39,6 +39,17 @@ route.get(
   asyncHandler(BankDetailController.getAll)
 );
 
+// GET ALL MY
+route.get(
+  "/my",
+  AuthMiddleware.isAuthenticated,
+  ValidateRequest.validate({
+    query: BankDetailValidationSchemas.getAllBankDetails,
+  }),
+
+  asyncHandler(BankDetailController.getAllMy)
+);
+
 // UPDATE
 route.patch(
   "/:id",

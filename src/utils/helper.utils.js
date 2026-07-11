@@ -3,21 +3,10 @@ import { ApiError } from "./ApiError.js";
 
 class HelperUtils {
   static generateUniqueId(prefix = "TXN") {
-    const now = new Date();
-
-    // DATE → YYYYMMDD
-    const date = now.toLocaleDateString("en-CA").replace(/-/g, "");
-
-    // TIME → HHMMSS (24-hour format)
-    const time = now
-      .toLocaleTimeString("en-GB", { hour12: false })
-      .replace(/:/g, "");
 
     // Random 3 digit
     const random = Math.floor(100 + Math.random() * 900);
-
-    const ms = now.getMilliseconds().toString().padStart(3, "0");
-    return `${prefix}-${date}-${time}${ms}-${random}`;
+    return `${prefix}-${random}`;
   }
 
   static generatePasswordOrPin({ type = "PASSWORD", length }) {
