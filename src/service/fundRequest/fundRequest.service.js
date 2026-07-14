@@ -16,7 +16,7 @@ export default class FundRequestService {
 
   static async getServiceProvide(apiKeyId, providerCode) {
     const serviceProvider = await ProviderRoutingResolver.resolve({
-      apiKeyId,
+      userId: actor.id,
       serviceCode: "FUND_REQUEST",
     });
 
@@ -30,10 +30,10 @@ export default class FundRequestService {
   }
 
   static async create(payload, file, actor, apiKey) {
-    const serviceProvider = await this.getServiceProvide(
-      apiKey?.id,
-      "FUND_REQUEST"
-    );
+    const serviceProvider = await ProviderRoutingResolver.resolve({
+      userId: actor.id,
+      serviceCode: "FUND_REQUEST",
+    });
 
     const Service = this.getService(serviceProvider?.provider?.code);
     return Service.create(payload, file, actor, serviceProvider);

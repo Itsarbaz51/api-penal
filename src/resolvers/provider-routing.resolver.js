@@ -2,25 +2,62 @@ import prisma from "../db/db.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export default class ProviderRoutingResolver {
-  static async resolve({ apiKeyId, serviceCode }) {
-    const mapping = await prisma.apiKeyProviderMapping.findFirst({
-      where: {
-        apiKeyId,
-        isActive: true,
-        service: {
-          code: serviceCode,
+  static async resolve({ apiKeyId, userId, serviceCode }) {
+    let mapping;
+
+    // API REQUEST
+    if (apiKeyId) {
+      mapping = await prisma.apiKeyProviderMapping.findFirst({
+        where: {
+          apiKeyId,
+          isActive: true,
+          service: {
+            code: serviceCode,
+          },
         },
-      },
+        include: {
+          provider: true,
+          service: true,
+        },
+        orderBy: {
+          priority: "asc",
+        },
+      });
+    }
 
-      include: {
-        provider: true,
-        service: true,
-      },
+    // DASHBOARD REQUEST
+    if (!mapping && userId) {
+      const apiKey = await prisma.apiKey.findFirst({
+        where: {
+          userId,
+          isActive: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-      orderBy: {
-        priority: "asc",
-      },
-    });
+      if (!apiKey) {
+        throw ApiError.badRequest("Active API Key not found");
+      }
+
+      mapping = await prisma.apiKeyProviderMapping.findFirst({
+        where: {
+          apiKeyId: apiKey.id,
+          isActive: true,
+          service: {
+            code: serviceCode,
+          },
+        },
+        include: {
+          provider: true,
+          service: true,
+        },
+        orderBy: {
+          priority: "asc",
+        },
+      });
+    }
 
     if (!mapping) {
       throw ApiError.badRequest("Provider mapping not found");
@@ -32,7 +69,6 @@ export default class ProviderRoutingResolver {
         serviceId: mapping.serviceId,
         isActive: true,
       },
-
       include: {
         provider: true,
         service: true,

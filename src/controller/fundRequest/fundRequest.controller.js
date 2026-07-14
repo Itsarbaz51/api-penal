@@ -8,7 +8,6 @@ class FundRequestController {
       req.body,
       req.file,
       req.user,
-      req.apiKey
     );
 
     if (!result) {
@@ -36,7 +35,6 @@ class FundRequestController {
     const result = await FundRequestService.checkStatus(
       req.body,
       req.user,
-      req.apiKey
     );
 
     if (!result) {

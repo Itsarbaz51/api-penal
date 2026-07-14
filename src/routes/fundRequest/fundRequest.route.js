@@ -15,7 +15,6 @@ route.post(
   "/",
   AuthMiddleware.isAuthenticated,
   AuthMiddleware.authorize(["API_HOLDER"]),
-  ApiKeyMiddleware.verify,
   upload.single("paymentImage"),
   ValidateRequest.validate({
     body: FundRequestSchema.createFundRequestSchema,
