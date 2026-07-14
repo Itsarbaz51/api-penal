@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 import { ApiError } from "./ApiError.js";
+import fs from "node:fs";
 
 class HelperUtils {
   static generateUniqueId(prefix = "TXN") {
-
     // Random 3 digit
     const random = Math.floor(100 + Math.random() * 900);
     return `${prefix}-${random}`;
@@ -76,6 +76,19 @@ class HelperUtils {
 
   static random(max) {
     return crypto.randomInt(0, max);
+  }
+
+  static deleteOldImage(oldImagePath) {
+    if (fs.existsSync(oldImagePath)) {
+      try {
+        fs.unlinkSync(oldImagePath);
+        console.log("Local image deleted successfully::", oldImagePath);
+      } catch (err) {
+        console.log("Error deleting local image:", err.message);
+      }
+    } else {
+      console.log("No local image to delete at:", oldImagePath);
+    }
   }
 }
 

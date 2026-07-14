@@ -5,7 +5,7 @@ import AadhaarService from "../../service/aadhaar/aadhaar.service.js";
 
 class AadhaarController {
   static sendOtp = asyncHandler(async (req, res) => {
-    const result = await AadhaarService.sendOtp(req.body, req.user);
+    const result = await AadhaarService.sendOtp(req.body, req.user, req.apiKey);
 
     if (!result) {
       throw ApiError.internal("Failed to send OTP");
@@ -17,7 +17,11 @@ class AadhaarController {
   });
 
   static verify = asyncHandler(async (req, res) => {
-    const result = await AadhaarService.verifyOtp(req.body, req.user);
+    const result = await AadhaarService.verifyOtp(
+      req.body,
+      req.user,
+      req.apiKey
+    );
 
     if (!result) {
       throw ApiError.internal("Verification failed");

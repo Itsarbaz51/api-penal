@@ -20,6 +20,7 @@ import apiLanguageRoute from "./api-language.route.js";
 import ledgerEntryRoute from "./ledger-entry.routes.js";
 import aadhaarRoutes from "./aadhaar/aadhaar.routes.js";
 import transactionRoute from "./transaction.route.js";
+import fundRequestRoutes from "./fundRequest/fundRequest.route.js";
 
 const router = Router();
 
@@ -45,5 +46,6 @@ router.use("/ledger-entries", ledgerEntryRoute);
 router.use("/transactions", transactionRoute);
 
 router.use("/aadhaar", aadhaarRoutes);
+router.use("/fund-request", fundRequestRoutes);
 
 export default router;
