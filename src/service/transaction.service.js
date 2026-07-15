@@ -29,6 +29,7 @@ export default class TransactionService {
         walletId: payload.walletId,
 
         serviceProviderId: payload.serviceProviderId,
+        providerReference: payload?.providerReference,
 
         serviceCode: payload.serviceCode,
         providerCode: payload.providerCode,
