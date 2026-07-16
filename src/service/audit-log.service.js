@@ -2,7 +2,6 @@ import prisma from "../db/db.js";
 
 class AuditLogService {
   // GET ALL
-  // GET ALL
   static async getAll(payload, actor) {
     const {
       page = 1,
