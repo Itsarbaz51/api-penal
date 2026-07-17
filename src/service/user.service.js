@@ -101,57 +101,112 @@ class UserService {
     };
   }
 
-  static async getUsers() {
-    const users = await prisma.user.findMany({
-      where: {
-        deletedAt: null,
+  static async getUsers(query) {
+    const { page = 1, limit = 10, search = "", status } = query;
 
-        role: {
-          not: "SUPER_ADMIN",
-        },
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const where = {
+      deletedAt: null,
+
+      role: {
+        not: "SUPER_ADMIN",
       },
 
-      include: {
-        package: true,
-        permissions: {
-          select: {
-            id: true,
-            serviceId: true,
-            canView: true,
-            canProcess: true,
-            isActive: true,
-            service: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
+      ...(search && {
+        OR: [
+          {
+            fullName: {
+              contains: search,
+            },
+          },
+          {
+            email: {
+              contains: search,
+            },
+          },
+          {
+            phoneNumber: {
+              contains: search,
+            },
+          },
+          {
+            registrationNumber: {
+              contains: search,
+            },
+          },
+          {
+            companyName: {
+              contains: search,
+            },
+          },
+        ],
+      }),
+
+      ...(status && {
+        status,
+      }),
+    };
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+
+        skip,
+
+        take: Number(limit),
+
+        include: {
+          package: true,
+          permissions: {
+            select: {
+              id: true,
+              serviceId: true,
+              canView: true,
+              canProcess: true,
+              isActive: true,
+              service: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                },
               },
             },
           },
         },
-      },
 
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
 
-    return users.map((user) => {
-      const {
-        password,
-        transactionPin,
-        refreshToken,
-        passwordForgotToken,
-        passwordForgotExpires,
-        ...safeUser
-      } = user;
+      prisma.user.count({ where }),
+    ]);
 
-      return {
-        ...safeUser,
-        password: "********",
-        transactionPin: "****",
-      };
-    });
+    return {
+      data: users.map((user) => {
+        const {
+          password,
+          transactionPin,
+          refreshToken,
+          passwordForgotToken,
+          passwordForgotExpires,
+          ...safeUser
+        } = user;
+
+        return {
+          ...safeUser,
+          password: "********",
+          transactionPin: "****",
+        };
+      }),
+
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit)),
+    };
   }
 
   static async getUserCredentials(id) {
