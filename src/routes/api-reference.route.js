@@ -1,5 +1,4 @@
 import { Router } from "express";
-
 import ApiReferenceController from "../controller/api-reference.controller.js";
 import ApiReferenceValidationSchemas from "../validation/api-reference.validation.js";
 import ValidateRequest from "../middleware/validateRequest.middleware.js";
@@ -18,7 +17,7 @@ route.post(
   asyncHandler(ApiReferenceController.create)
 );
 
-// GET ALL
+// ADMIN LIST
 route.get(
   "/",
   AuthMiddleware.isAuthenticated,
@@ -26,6 +25,15 @@ route.get(
     query: ApiReferenceValidationSchemas.getAllApiReferences,
   }),
   asyncHandler(ApiReferenceController.getAll)
+);
+
+// PUBLIC DOCS (No Auth)
+route.get(
+  "/docs",
+  ValidateRequest.validate({
+    query: ApiReferenceValidationSchemas.getPublicApiReferences,
+  }),
+  asyncHandler(ApiReferenceController.getActive)
 );
 
 // GET BY ID

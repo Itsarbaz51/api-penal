@@ -16,7 +16,28 @@ class ApiReferenceService {
     }
 
     return prisma.apiReference.create({
-      data: payload,
+      data: {
+        name: payload.name,
+        module: payload.module,
+        method: payload.method,
+        endpoint: payload.endpoint,
+        description: payload.description,
+        authType: payload.authType,
+        headers: payload.headers,
+        queryParams: payload.queryParams,
+        pathParams: payload.pathParams,
+        requestFields: payload.requestFields,
+        sampleRequest: payload.sampleRequest,
+        sampleResponse: payload.sampleResponse,
+        responseFields: payload.responseFields,
+        errorResponses: payload.errorResponses,
+        tags: payload.tags,
+        version: payload.version,
+        baseUrl: payload.baseUrl,
+        contentType: payload.contentType,
+        sortOrder: payload.sortOrder,
+        isActive: payload.isActive,
+      },
     });
   }
 
@@ -32,21 +53,20 @@ class ApiReferenceService {
 
     return prisma.apiReference.update({
       where: { id },
-
-      data: payload,
+      data: {
+        ...payload,
+      },
     });
   }
 
   // GET ALL
   static async getAll(payload) {
-    const { page = 1, limit = 10, module, isActive, search } = payload;
+    const { page = 1, limit = 10, module, search, isActive } = payload;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (page - 1) * limit;
 
     const where = {
-      ...(module && {
-        module,
-      }),
+      ...(module && { module }),
 
       ...(isActive !== undefined && {
         isActive,
@@ -57,18 +77,19 @@ class ApiReferenceService {
           {
             name: {
               contains: search,
+              mode: "insensitive",
             },
           },
-
           {
             module: {
               contains: search,
+              mode: "insensitive",
             },
           },
-
           {
             endpoint: {
               contains: search,
+              mode: "insensitive",
             },
           },
         ],
@@ -78,13 +99,77 @@ class ApiReferenceService {
     const [data, total] = await Promise.all([
       prisma.apiReference.findMany({
         where,
-        skip,
+        skip: Number(skip),
         take: Number(limit),
         orderBy: [
           {
             sortOrder: "asc",
           },
+          {
+            createdAt: "desc",
+          },
+        ],
+      }),
 
+      prisma.apiReference.count({
+        where,
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // GET active
+  static async getActive(payload) {
+    const { module, search } = payload;
+
+    const where = {
+      isActive: true,
+
+      ...(module && {
+        module,
+      }),
+
+      ...(search && {
+        OR: [
+          {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            module: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            endpoint: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }),
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.apiReference.findMany({
+        where,
+
+        orderBy: [
+          {
+            sortOrder: "asc",
+          },
           {
             createdAt: "desc",
           },
@@ -99,9 +184,6 @@ class ApiReferenceService {
     return {
       data,
       total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / Number(limit)),
     };
   }
 

@@ -20,9 +20,16 @@ class ApiReferenceController {
     );
   };
 
-  // GET ALL
+  // ADMIN
   static getAll = async (req, res) => {
     const result = await ApiReferenceService.getAll(req.query);
+
+    return res.json(ApiResponse.success(result));
+  };
+
+  // PUBLIC DOCS
+  static getActive = async (req, res) => {
+    const result = await ApiReferenceService.getActive(req.query);
 
     return res.json(ApiResponse.success(result));
   };

@@ -186,29 +186,38 @@ model ApiKey {
 model ApiReference {
   id String @id @default(uuid())
 
-  name String
-
-  module String
-  // BBPS
-  // PAYOUT
-  // VERIFICATION
-
-  method String
-
-  endpoint String
+  name     String
+  module   String
+  method   String
+  endpoint String @unique
 
   description String? @db.LongText
 
-  requestFields Json? @map("request_fields")
-  // body fields
+  // Authentication
+  authType String? @default("API_KEY")
+  headers  Json? // x-api-key, x-secret-key, Authorization etc.
 
+  // Request
+  queryParams   Json? @map("query_params")
+  pathParams    Json? @map("path_params")
+  requestFields Json? @map("request_fields")
   sampleRequest Json? @map("sample_request")
 
+  // Response
   sampleResponse Json? @map("sample_response")
+  responseFields Json? @map("response_fields")
 
-  sortOrder Int @default(0) @map("sort_order")
+  // Errors
+  errorResponses Json? @map("error_responses")
 
-  isActive Boolean @default(true) @map("is_active")
+  // Extra
+  tags        Json?
+  version     String? @default("v1")
+  baseUrl     String?
+  contentType String? @default("application/json")
+
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
