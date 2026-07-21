@@ -21,6 +21,7 @@ import ledgerEntryRoute from "./ledger-entry.routes.js";
 import aadhaarRoutes from "./aadhaar/aadhaar.routes.js";
 import transactionRoute from "./transaction.route.js";
 import fundRequestRoutes from "./fundRequest/fundRequest.route.js";
+import bankVerificationRoutes from "./bankVerification/bankVerification.routes.js";
 
 const router = Router();
 
@@ -47,5 +48,6 @@ router.use("/transactions", transactionRoute);
 
 router.use("/aadhaar", aadhaarRoutes);
 router.use("/fund-request", fundRequestRoutes);
+router.use("/bank-verification", bankVerificationRoutes);
 
 export default router;

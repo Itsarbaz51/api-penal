@@ -9,8 +9,6 @@ class UserController {
   }
 
   static async getAll(req, res) {
-    console.log(req.query);
-
     const users = await UserService.getUsers(req?.query);
 
     return res.json(ApiResponse.success(users, "Users fetched successfully"));

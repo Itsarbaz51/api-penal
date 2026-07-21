@@ -2,7 +2,6 @@ import { ApiError } from "../../utils/ApiError.js";
 import BankFundRequestPlugin from "../../plugin/fundRequest/bank.plugin.js";
 
 export function getFundRequestPlugin(providerCode, config) {
-  console.log({ providerCode, config });
 
   switch (providerCode) {
     case "BANK_TRANSFER":

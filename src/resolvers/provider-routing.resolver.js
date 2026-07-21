@@ -60,7 +60,7 @@ export default class ProviderRoutingResolver {
     }
 
     if (!mapping) {
-      throw ApiError.badRequest("Provider mapping not found");
+      throw ApiError.badRequest("API KEY Provider mapping not found");
     }
 
     const serviceProvider = await prisma.serviceProvider.findFirst({
