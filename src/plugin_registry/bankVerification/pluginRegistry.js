@@ -3,7 +3,7 @@ import { ApiError } from "../../utils/ApiError.js";
 
 export default function getBankVerificationPlugin(providerCode, config) {
   switch (providerCode) {
-    case "AUBANK":
+    case "AU_BANK":
       return new AuBankPlugin(config);
 
     default:

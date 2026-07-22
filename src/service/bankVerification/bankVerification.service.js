@@ -6,7 +6,7 @@ import AuBankVerificationService from "./aubank.bankVerification.service.js";
 export default class BankVerificationService {
   static getService(providerCode) {
     switch (providerCode) {
-      case "AUBANK":
+      case "AU_BANK":
         return AuBankVerificationService;
 
       default:
