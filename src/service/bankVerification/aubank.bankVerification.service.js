@@ -28,6 +28,7 @@ export default class AuBankVerificationService {
           },
           serviceProvider,
           paymentMethod: "BANK_VERIFICATION",
+          transactionType: "PENNY_DROP",
         });
 
       if (isDuplicate) {
@@ -135,6 +136,7 @@ export default class AuBankVerificationService {
           },
           serviceProvider,
           paymentMethod: "BANK_VERIFICATION",
+          transactionType: "PENNY_LESS",
         });
 
       if (isDuplicate) {

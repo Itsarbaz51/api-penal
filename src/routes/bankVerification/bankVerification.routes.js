@@ -20,15 +20,15 @@ bankVerificationRoutes.post(
   BankVerificationController.pennyDrop
 );
 
-// bankVerificationRoutes.post(
-//   "/penny-less",
-//   AuthMiddleware.isAuthenticated,
-//   AuthMiddleware.authorize(["API_HOLDER"]),
-//   ApiKeyMiddleware.verify,
-//   ValidateRequest.validate({
-//     body: pennyLessSchema,
-//   }),
-//   BankVerificationController.pennyLess
-// );
+bankVerificationRoutes.post(
+  "/penny-less",
+  AuthMiddleware.isAuthenticated,
+  AuthMiddleware.authorize(["API_HOLDER"]),
+  ApiKeyMiddleware.verify,
+  ValidateRequest.validate({
+    body: ApiKeyValidationSchemas.pennyLessSchema,
+  }),
+  BankVerificationController.pennyLess
+);
 
 export default bankVerificationRoutes;

@@ -16,6 +16,7 @@ export async function resolvePricingConfig(
     operatorCode,
     paymentMethod,
     cardNetwork,
+    transactionType,
     amount,
   }
 ) {
@@ -49,6 +50,7 @@ export async function resolvePricingConfig(
   let rule = await tx.commissionSetting.findFirst({
     where: {
       serviceProviderId,
+      transactionType,
       isActive: true,
 
       OR: [
@@ -82,7 +84,7 @@ export async function resolvePricingConfig(
       where: {
         serviceProviderId,
         isActive: true,
-
+        transactionType,
         paymentMethod,
 
         ...(operatorCode && {
@@ -127,7 +129,7 @@ export async function resolvePricingConfig(
       where: {
         serviceProviderId,
         isActive: true,
-
+        transactionType,
         minAmount: {
           lte: txnAmount,
         },
@@ -198,6 +200,7 @@ export default class SettlementEngine {
     actor,
     payload,
     serviceProvider,
+    transactionType,
     category,
     operator,
     operatorCode,
@@ -215,6 +218,7 @@ export default class SettlementEngine {
     const config = await resolvePricingConfig(tx, {
       userId,
       serviceProviderId: serviceProvider.id,
+      transactionType,
       category,
       operator,
       operatorCode,

@@ -8,6 +8,7 @@ export default class CommissionEngine {
     tx,
     {
       transactionId,
+      transactionType,
       userId,
       pricing,
       createdBy,
@@ -46,6 +47,7 @@ export default class CommissionEngine {
           where: {
             serviceProviderId,
             mode: "COMMISSION",
+            transactionType,
             isActive: true,
             targetUserId: user.id,
           },
@@ -54,6 +56,7 @@ export default class CommissionEngine {
           where: {
             serviceProviderId,
             mode: "COMMISSION",
+            transactionType,
             isActive: true,
             packageId: user.packageId,
           },

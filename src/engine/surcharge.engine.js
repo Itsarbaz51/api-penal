@@ -12,6 +12,7 @@ export default class SurchargeEngine {
       pricing,
       createdBy,
       serviceProviderId,
+      transactionType,
       category,
       operator,
       paymentMethod,
@@ -66,6 +67,7 @@ export default class SurchargeEngine {
         (await tx.commissionSetting.findFirst({
           where: {
             serviceProviderId,
+            transactionType,
             mode: "SURCHARGE",
             isActive: true,
             targetUserId: user.id,
@@ -75,6 +77,7 @@ export default class SurchargeEngine {
           where: {
             serviceProviderId,
             mode: "SURCHARGE",
+            transactionType,
             isActive: true,
             packageId: user.packageId,
           },
