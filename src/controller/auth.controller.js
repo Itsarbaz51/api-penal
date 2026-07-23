@@ -44,8 +44,8 @@ class AuthController {
     return res.json(ApiResponse.success(null, "Reset email sent"));
   }
 
-  static async resetPasswordToken(req, res) {
-    await AuthServices.resetPasswordToken(req.body);
+  static async forgotPasswordVerify(req, res) {
+    await AuthServices.forgotPasswordVerify(req.body);
 
     return res.json(ApiResponse.success(null, "Password reset successful"));
   }

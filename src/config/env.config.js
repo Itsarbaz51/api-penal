@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
 export const envConfig = {
-  API_BASE_URL: process.env.API_BASE_URL || "http://localhost:3000/api",
+  API_BASE_URL: process.env.API_BASE_URL || "http://localhost:3000",
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: process.env.PORT || 3000,
 

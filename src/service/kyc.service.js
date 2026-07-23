@@ -1,5 +1,6 @@
 import prisma from "../db/db.js";
 import { ApiError } from "../utils/ApiError.js";
+import HelperUtils from "../utils/helper.utils.js";
 import S3Service from "../utils/S3Service.utils.js";
 
 class KycService {
@@ -7,7 +8,7 @@ class KycService {
   static async create(payload, actor, files) {
     const userExists = await prisma.user.findUnique({
       where: {
-        id: payload.userId,
+        id: actor.id,
       },
     });
 
@@ -17,7 +18,7 @@ class KycService {
 
     const existing = await prisma.kyc.findUnique({
       where: {
-        userId: payload.userId,
+        userId: userExists.id,
       },
     });
 
@@ -42,9 +43,11 @@ class KycService {
       }
     }
 
+    const registrationNumber = await String(HelperUtils.random(6));
+
     return prisma.kyc.create({
       data: {
-        registrationNumber: payload.registrationNumber,
+        registrationNumber,
         fullName: payload.fullName,
         dob: payload.dob,
         gender: payload.gender,
@@ -58,7 +61,7 @@ class KycService {
 
         user: {
           connect: {
-            id: payload.userId,
+            id: userExists.id,
           },
         },
 

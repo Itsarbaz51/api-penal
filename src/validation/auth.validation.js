@@ -31,7 +31,7 @@ class AuthValidationSchemas {
     });
   }
 
-  static get resetPasswordToken() {
+  static get forgotPasswordVerify() {
     return z
       .object({
         token: z.string(),

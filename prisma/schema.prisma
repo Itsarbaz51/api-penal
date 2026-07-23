@@ -332,7 +332,7 @@ model Beneficiary {
 
 enum AddressType {
   HOME
-  BUSINESS
+  OFFICE
 }
 
 model Address {

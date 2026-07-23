@@ -156,14 +156,14 @@ class AuthServices {
       },
     });
 
-    const resetUrl = `${envConfig.API_BASE_URL}/reset-password?token=${resetToken}`;
+    const forgotUrl = `${envConfig.API_BASE_URL}/forgot-password-verify?token=${resetToken}`;
 
     await emailQueue.add(
       "forgot-password",
       {
         email: user.email,
         name: user.fullName,
-        resetUrl,
+        forgotUrl,
       },
       {
         attempts: 3,
@@ -176,7 +176,7 @@ class AuthServices {
     );
   }
 
-  static async resetPasswordToken(payload) {
+  static async forgotPasswordVerify(payload) {
     const { token, password } = payload;
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");

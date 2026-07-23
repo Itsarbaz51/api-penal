@@ -1,15 +1,13 @@
 import { z } from "zod";
 
 class KycValidationSchemas {
-  // DOCUMENT
   static documentSchema = z.object({
     type: z.string().min(2),
-    fileUrl: z.string().min(3),
+    fileUrl: z.string().optional(), // Create ke time file upload hoga
     documentNumber: z.string().optional(),
     remarks: z.string().optional(),
   });
 
-  // ADDRESS
   static addressSchema = z.object({
     type: z.string(),
     address: z.string(),
@@ -19,7 +17,6 @@ class KycValidationSchemas {
     landmark: z.string(),
   });
 
-  // CREATE
   static get createKyc() {
     return z.object({
       fullName: z.string(),
@@ -32,42 +29,20 @@ class KycValidationSchemas {
       kycType: z.string(),
       remarks: z.string().optional(),
       metadata: z.any().optional(),
-      addresses: z.array(this.addressSchema),
-      documents: z.array(this.documentSchema),
-    });
-  }
 
-  // UPDATE
-  static get updateKyc() {
-    return z.object({
-      fullName: z.string().optional(),
-      dob: z.coerce.date().optional(),
-      gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
-      email: z.email().optional(),
-      phoneNumber: z.string().optional(),
-      companyName: z.string().optional(),
-      businessType: z.string().optional(),
-      status: z.enum(["PENDING", "VERIFIED", "REJECTED"]).optional(),
-      rejectionReason: z.string().optional(),
-      remarks: z.string().optional(),
-      metadata: z.any().optional(),
-    });
-  }
+      addresses: z.preprocess((val) => {
+        if (typeof val === "string") {
+          return JSON.parse(val);
+        }
+        return val;
+      }, z.array(this.addressSchema)),
 
-  // PARAMS
-  static get kycIdParam() {
-    return z.object({
-      id: z.uuid(),
-    });
-  }
-
-  // QUERY
-  static get getAllKyc() {
-    return z.object({
-      page: z.coerce.number().min(1).optional(),
-      limit: z.coerce.number().min(1).max(100).optional(),
-      status: z.string().optional(),
-      search: z.string().optional(),
+      documents: z.preprocess((val) => {
+        if (typeof val === "string") {
+          return JSON.parse(val);
+        }
+        return val;
+      }, z.array(this.documentSchema)),
     });
   }
 }

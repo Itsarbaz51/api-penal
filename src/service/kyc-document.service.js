@@ -37,8 +37,6 @@ class KycDocumentService {
     });
   }
 
-  
-
   // DELETE
   static async delete(id) {
     const exists = await prisma.kycDocument.findUnique({

@@ -15,7 +15,7 @@ new Worker(
       const template = EmailTemplates.forgotPassword({
         name: job.data.name,
 
-        resetUrl: job.data.resetUrl,
+        forgotUrl: job.data.forgotUrl,
       });
 
       console.log("Sending email...");
@@ -29,6 +29,22 @@ new Worker(
       });
 
       console.log("EMAIL SENT SUCCESS");
+    }
+
+    if (job.name === "welcome") {
+      const template = EmailTemplates.welcome({
+        name: job.data.name,
+        companyName: job.data.companyName,
+        registrationNumber: job.data.registrationNumber,
+        email: job.data.email,
+        password: job.data.password,
+      });
+
+      await sendEmail({
+        to: job.data.email,
+        subject: template.subject,
+        html: template.html,
+      });
     }
   },
 

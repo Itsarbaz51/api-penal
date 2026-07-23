@@ -225,7 +225,7 @@ CREATE TABLE `beneficiarys` (
 CREATE TABLE `addresses` (
     `id` VARCHAR(191) NOT NULL,
     `kyc_id` VARCHAR(191) NOT NULL,
-    `type` ENUM('HOME', 'BUSINESS') NOT NULL DEFAULT 'HOME',
+    `type` ENUM('HOME', 'OFFICE') NOT NULL DEFAULT 'HOME',
     `address` LONGTEXT NOT NULL,
     `pin_code` VARCHAR(191) NOT NULL,
     `state` VARCHAR(191) NOT NULL,

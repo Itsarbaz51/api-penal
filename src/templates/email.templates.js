@@ -1,7 +1,7 @@
 class EmailTemplates {
-  static forgotPassword({ name, resetUrl }) {
+  static forgotPassword({ name, forgotUrl }) {
     return {
-      subject: "Reset Your Password",
+      subject: "Forgot Your Password",
 
       html: `
       <div
@@ -19,7 +19,7 @@ class EmailTemplates {
             color:#111827;
           "
         >
-          Reset Password
+          Forgot Password
         </h1>
 
         <p>
@@ -28,11 +28,16 @@ class EmailTemplates {
 
         <p>
           We received a request
-          to reset your password.
+          to Forgot your password.
+        </p>
+        
+        <p>
+         ${forgotUrl}
         </p>
 
+
         <a
-          href="${resetUrl}"
+          href="${forgotUrl}"
           style="
             background:#4f46e5;
             color:white;
@@ -43,7 +48,7 @@ class EmailTemplates {
             margin-top:10px;
           "
         >
-          Reset Password
+          Forgot Password
         </a>
 
         <p
@@ -65,7 +70,83 @@ class EmailTemplates {
 
   static loginAlert(data) {}
 
-  static welcome(data) {}
+  static welcome({ name, companyName, registrationNumber, email, password }) {
+    return {
+      subject: "🎉 Welcome to AZZUNIQUE Fintech",
+
+      html: `
+      <div style="max-width:650px;margin:auto;font-family:Arial,sans-serif;background:#ffffff;padding:30px">
+
+        <h2 style="color:#2563eb">
+          Welcome to AZZUNIQUE Fintech
+        </h2>
+
+        <p>Hello <b>${name}</b>,</p>
+
+        <p>
+          Your API Holder account has been successfully created.
+        </p>
+
+        <table
+          cellpadding="10"
+          cellspacing="0"
+          style="border-collapse:collapse;width:100%;margin-top:20px"
+        >
+          <tr>
+            <td><b>Company</b></td>
+            <td>${companyName}</td>
+          </tr>
+
+          <tr>
+            <td><b>Registration No.</b></td>
+            <td>${registrationNumber}</td>
+          </tr>
+
+          <tr>
+            <td><b>Email</b></td>
+            <td>${email}</td>
+          </tr>
+
+          <tr>
+            <td><b>Temporary Password</b></td>
+            <td>${password}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:30px">
+          <p>
+            <b>Next Steps</b>
+          </p>
+
+          <ol>
+            <li>Login to your dashboard.</li>
+            <li>Change your password.</li>
+            <li>Complete your KYC verification.</li>
+            <li>Add your bank account.</li>
+            <li>Start using APIs after approval.</li>
+          </ol>
+        </div>
+
+        <div
+          style="
+            margin-top:25px;
+            padding:15px;
+            background:#FEF3C7;
+            border-radius:8px;
+          "
+        >
+          Please complete your KYC as soon as possible. API services will be activated only after successful verification.
+        </div>
+
+        <p style="margin-top:30px">
+          Regards,<br/>
+          <b>AZZUNIQUE Fintech Team</b>
+        </p>
+
+      </div>
+    `,
+    };
+  }
 
   static pinReset(data) {}
 }

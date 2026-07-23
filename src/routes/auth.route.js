@@ -20,9 +20,9 @@ route.post(
 );
 
 route.post(
-  "/reset-password-token",
-  ValidateRequest.validate(AuthValidationSchemas.resetPasswordToken),
-  asyncHandler(AuthController.resetPasswordToken)
+  "/forgot-password-verify",
+  ValidateRequest.validate(AuthValidationSchemas.forgotPasswordVerify),
+  asyncHandler(AuthController.forgotPasswordVerify)
 );
 
 route.post(

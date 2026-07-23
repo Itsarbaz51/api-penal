@@ -1,4 +1,5 @@
 import prisma from "../db/db.js";
+import { emailQueue } from "../queues/email.queue.js";
 import { ApiError } from "../utils/ApiError.js";
 import CryptoService from "../utils/crypto.utils.js";
 import HelperUtils from "../utils/helper.utils.js";
@@ -92,6 +93,14 @@ class UserService {
           walletType: "TDS",
         },
       ],
+    });
+
+    await emailQueue.add("welcome", {
+      email: user.email,
+      name: user.fullName,
+      companyName: user.companyName,
+      registrationNumber: user.registrationNumber,
+      password: generatedPassword,
     });
 
     return {
