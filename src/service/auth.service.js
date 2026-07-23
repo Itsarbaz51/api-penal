@@ -103,6 +103,13 @@ class AuthServices {
             holdBalance: true,
           },
         },
+        kyc: {
+          select: {
+            id: true,
+            status: true,
+            rejectionReason: true, 
+          },
+        },
       },
     });
 

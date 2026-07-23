@@ -45,6 +45,12 @@ class KycValidationSchemas {
       }, z.array(this.documentSchema)),
     });
   }
+
+  static get kycIdParam() {
+    return z.object({
+      id: z.uuid(),
+    });
+  }
 }
 
 export default KycValidationSchemas;
