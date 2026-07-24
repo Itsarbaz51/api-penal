@@ -9,7 +9,12 @@ class KycController {
   };
 
   static update = async (req, res) => {
-    const result = await KycService.update(req.params.id, req.body, req.user);
+    const result = await KycService.update(
+      req.params.id,
+      req.body,
+      req.user,
+      req.files
+    );
 
     return res.json(ApiResponse.success(result, "KYC updated successfully"));
   };

@@ -87,33 +87,154 @@ class KycService {
   }
 
   // UPDATE
-  static async update(id, payload, actor) {
+  static async update(id, payload, actor, files) {
     const exists = await prisma.kyc.findUnique({
       where: { id },
+      include: {
+        addresses: true,
+        documents: true,
+      },
     });
 
     if (!exists) {
       throw ApiError.notFound("KYC not found");
     }
 
-    // Only SUPER_ADMIN can update status
-    if (payload.status !== undefined && actor.role !== "SUPER_ADMIN") {
+    const {
+      addresses = [],
+      documents = [],
+      status,
+      rejectionReason,
+      ...kycData
+    } = payload;
+
+    // Only SUPER_ADMIN can change status manually
+    if (status !== undefined && actor.role !== "SUPER_ADMIN") {
       throw ApiError.forbidden("Only Super Admin can update KYC status");
     }
 
-    if (payload.status === "REJECTED" && !payload.rejectionReason) {
+    if (status === "REJECTED" && !rejectionReason) {
       throw ApiError.badRequest(
-        "Rejection Reason are required when rejecting KYC"
+        "Rejection Reason is required when rejecting KYC"
       );
     }
 
-    return prisma.kyc.update({
-      where: { id },
-      data: payload,
-      include: {
-        addresses: true,
-        documents: true,
-      },
+    // API Holder resubmits rejected KYC
+    if (actor.role === "API_HOLDER") {
+      if (exists.status === "REJECTED") {
+        kycData.status = "PENDING";
+        kycData.rejectionReason = null;
+      }
+    } else if (actor.role === "SUPER_ADMIN") {
+      if (status !== undefined) {
+        kycData.status = status;
+        kycData.rejectionReason = rejectionReason ?? null;
+      }
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // ---------------- UPDATE KYC ----------------
+
+      await tx.kyc.update({
+        where: { id },
+        data: {
+          ...kycData,
+          metadata:
+            typeof kycData.metadata === "string"
+              ? JSON.parse(kycData.metadata)
+              : kycData.metadata,
+        },
+      });
+
+      // ---------------- UPDATE ADDRESSES ----------------
+
+      for (const bodyAddress of addresses) {
+        const existingAddress = exists.addresses.find(
+          (a) => a.type === bodyAddress.type
+        );
+
+        if (existingAddress) {
+          await tx.address.update({
+            where: {
+              id: existingAddress.id,
+            },
+            data: {
+              address: bodyAddress.address,
+              pinCode: bodyAddress.pinCode,
+              state: bodyAddress.state,
+              city: bodyAddress.city,
+              landmark: bodyAddress.landmark,
+            },
+          });
+        } else {
+          await tx.address.create({
+            data: {
+              kycId: id,
+              ...bodyAddress,
+            },
+          });
+        }
+      }
+
+      // ---------------- UPDATE DOCUMENTS ----------------
+
+      const uploadedFiles = files?.documents || [];
+
+      for (let i = 0; i < documents.length; i++) {
+        const bodyDoc = documents[i];
+
+        const existingDoc = exists.documents.find(
+          (d) => d.type === bodyDoc.type
+        );
+
+        let fileUrl = existingDoc?.fileUrl || bodyDoc.fileUrl || null;
+
+        const uploadedFile = uploadedFiles[i];
+
+        // New file uploaded
+        if (uploadedFile) {
+          // Delete old S3 file
+          if (existingDoc?.fileUrl) {
+            await S3Service.delete({
+              fileUrl: existingDoc.fileUrl,
+            });
+          }
+
+          // Upload new file
+          fileUrl = await S3Service.upload(uploadedFile.path, "kyc");
+        }
+
+        if (existingDoc) {
+          await tx.kycDocument.update({
+            where: {
+              id: existingDoc.id,
+            },
+            data: {
+              documentNumber: bodyDoc.documentNumber,
+              remarks: bodyDoc.remarks,
+              fileUrl,
+            },
+          });
+        } else {
+          await tx.kycDocument.create({
+            data: {
+              kycId: id,
+              type: bodyDoc.type,
+              documentNumber: bodyDoc.documentNumber,
+              remarks: bodyDoc.remarks,
+              fileUrl,
+            },
+          });
+        }
+      }
+
+      return tx.kyc.findUnique({
+        where: { id },
+        include: {
+          addresses: true,
+          documents: true,
+        },
+      });
     });
   }
 

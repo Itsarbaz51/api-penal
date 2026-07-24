@@ -35,6 +35,12 @@ route.get(
 route.patch(
   "/:id",
   AuthMiddleware.isAuthenticated,
+  upload.fields([
+    {
+      name: "documents",
+      maxCount: 20,
+    },
+  ]),
   ValidateRequest.validate({
     params: KycValidationSchemas.kycIdParam,
   }),
