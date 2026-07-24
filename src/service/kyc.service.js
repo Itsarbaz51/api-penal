@@ -135,7 +135,7 @@ class KycService {
     return prisma.$transaction(async (tx) => {
       // ---------------- UPDATE KYC ----------------
 
-      await tx.kyc.update({
+      const updatedKyc = await tx.kyc.update({
         where: { id },
         data: {
           ...kycData,
@@ -226,6 +226,52 @@ class KycService {
             },
           });
         }
+      }
+
+      // ---------------- UPDATE USER & DOCUMENT VERIFY STATUS ----------------
+
+      if (updatedKyc.status === "VERIFIED") {
+        // User KYC Verified
+        await tx.user.update({
+          where: {
+            id: exists.userId,
+          },
+          data: {
+            isKycVerified: true,
+          },
+        });
+
+        // All Documents Verified
+        await tx.kycDocument.updateMany({
+          where: {
+            kycId: id,
+          },
+          data: {
+            isVerified: true,
+          },
+        });
+      }
+
+      if (updatedKyc.status === "PENDING" || updatedKyc.status === "REJECTED") {
+        // User KYC Not Verified
+        await tx.user.update({
+          where: {
+            id: exists.userId,
+          },
+          data: {
+            isKycVerified: false,
+          },
+        });
+
+        // All Documents Not Verified
+        await tx.kycDocument.updateMany({
+          where: {
+            kycId: id,
+          },
+          data: {
+            isVerified: false,
+          },
+        });
       }
 
       return tx.kyc.findUnique({
