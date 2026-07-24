@@ -122,7 +122,7 @@ class KycValidationSchemas {
         return val;
       }, z.array(this.documentSchema).optional()),
 
-      status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+      status: z.enum(["PENDING", "VERIFIED", "REJECTED"]).optional(),
       rejectionReason: z.string().optional(),
     });
   }
